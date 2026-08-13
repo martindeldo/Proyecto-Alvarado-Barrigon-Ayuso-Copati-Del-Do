@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width,
+                 initial-scale=1.0"
+    >
+
+    <title>Supermercado</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for(
+            'static',
+            filename='css/index.css'
+        ) }}"
+    >
+
+</head>
+
+
+<body>
+
+<header>
+
+    <h1>🛒 Supermercado</h1>
+
+    <h2>Sistema de gestión</h2>
+
+</header>
+
+
+<main class="menu">
+
+    <a href="login.html" class="boton">
+    📦 Control de Stock
+</a>
+
+
+    <a
+        href="/caja"
+        class="boton"
+    >
+        🛒 Caja
+    </a>
+
+</main>
+
+</body>
+
+</html>
