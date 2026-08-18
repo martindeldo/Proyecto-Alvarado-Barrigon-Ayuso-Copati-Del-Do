@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Gestión de Productos</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/gestion.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+
+<header>
+
+    <div>
+        <h1>📦 Gestión de Productos</h1>
+
+        <p>
+            Administración de productos y stock
+        </p>
+    </div>
+
+
+    <div class="usuario">
+
+        👤 {{ session["usuario"] }}
+
+        <a href="{{ url_for('logout') }}">
+            Cerrar sesión
+        </a>
+
+    </div>
+
+</header>
+
+
+<main>
+
+
+    <section class="acciones">
+
+        <button class="btn agregar">
+            ➕ Agregar producto
+        </button>
+
+        <button class="btn actualizar">
+            🔄 Actualizar stock
+        </button>
+
+    </section>
+
+
+    <section class="panel">
+
+        <div class="panel-header">
+
+            <h2>Productos</h2>
+
+            <input
+                type="text"
+                placeholder="🔎 Buscar producto..."
+                id="buscar"
+            >
+
+        </div>
+
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Código</th>
+
+                    <th>Producto</th>
+
+                    <th>Precio</th>
+
+                    <th>Stock</th>
+
+                    <th>Estado</th>
+
+                    <th>Acciones</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                <tr>
+
+                    <td>001</td>
+
+                    <td>Producto de ejemplo</td>
+
+                    <td>$1.500</td>
+
+                    <td>25</td>
+
+                    <td>
+                        <span class="estado disponible">
+                            Disponible
+                        </span>
+                    </td>
+
+                    <td>
+
+                        <button class="editar">
+                            ✏️
+                        </button>
+
+                        <button class="eliminar">
+                            🗑️
+                        </button>
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </section>
+
+
+    <a
+        href="{{ url_for('index') }}"
+        class="volver"
+    >
+        ← Volver al inicio
+    </a>
+
+</main>
+
+
+</body>
+
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width,
+                 initial-scale=1.0"
+    >
+
+    <title>Caja</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for(
+            'static',
+            filename='css/caja.css'
+        ) }}"
+    >
+
+</head>
+
+
+<body>
+
+<header>
+
+    <h1>🛒 Sistema de Caja</h1>
+
+</header>
+
+
+<main>
+
+
+    <div class="lector">
+
+        <label>
+            Escanear código de barras
+        </label>
+
+
+        <input
+            type="text"
+            id="codigo"
+            placeholder="Escanee un producto..."
+            autofocus
+        >
+
+    </div>
+
+
+    <div id="mensaje"></div>
+
+
+    <table>
+
+        <thead>
+
+            <tr>
+
+                <th>Producto</th>
+
+                <th>Precio</th>
+
+                <th>Cantidad</th>
+
+                <th>Subtotal</th>
+
+                <th></th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody id="carrito">
+
+        </tbody>
+
+    </table>
+
+
+    <div class="total">
+
+        TOTAL:
+
+        $<span id="total">
+            0.00
+        </span>
+
+    </div>
+
+
+    <button
+        class="boton comprar"
+        onclick="finalizarCompra()"
+    >
+        💳 Finalizar compra
+    </button>
+
+
+    <a href="/">
+        ← Volver
+    </a>
+
+</main>
+
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='js/caja.js'
+    ) }}"
+></script>
+
+
+</body>
+
+</html>
