@@ -1,63 +1,58 @@
 import os
-import pandas as pd
+from openpyxl import load_workbook
 import barcode
 from barcode.writer import ImageWriter
-from openpyxl import load_workbook
-from openpyxl.drawing.image import Image
 
 
 # ============================================================
 # CONFIGURACIÓN
 # ============================================================
 
-archivo_excel = "productos.xlsx"
+archivo_excel = "productos_con_barras.xlsx"
+
 carpeta_codigos = "codigos"
 
 codigo_inicial = 100000000001
 
 
 # ============================================================
-# CREAR CARPETA DE CÓDIGOS
+# CREAR CARPETA
 # ============================================================
 
-os.makedirs(carpeta_codigos, exist_ok=True)
-
-
-# ============================================================
-# LEER EXCEL CON PANDAS
-# ============================================================
-
-df = pd.read_excel(
-    archivo_excel,
-    header=1,
-    dtype={"Código de serie": "string"}
+os.makedirs(
+    carpeta_codigos,
+    exist_ok=True
 )
 
-print("Columnas encontradas por Pandas:")
-print(df.columns)
-print()
-
 
 # ============================================================
-# ABRIR EXCEL CON OPENPYXL
+# ABRIR EXCEL
 # ============================================================
 
-libro = load_workbook(archivo_excel)
+libro = load_workbook(
+    archivo_excel
+)
 
 hoja = libro.active
 
 
 # ============================================================
-# BUSCAR AUTOMÁTICAMENTE LA FILA DE ENCABEZADOS
+# BUSCAR FILA DE ENCABEZADOS
 # ============================================================
 
 fila_encabezados = None
 
-for fila in range(1, hoja.max_row + 1):
+for fila in range(
+    1,
+    hoja.max_row + 1
+):
 
     valores = []
 
-    for columna in range(1, hoja.max_column + 1):
+    for columna in range(
+        1,
+        hoja.max_column + 1
+    ):
 
         valor = hoja.cell(
             row=fila,
@@ -65,25 +60,31 @@ for fila in range(1, hoja.max_row + 1):
         ).value
 
         if valor is not None:
-            valores.append(str(valor).strip())
 
-    # Mostrar las primeras filas para comprobar
+            valores.append(
+                str(valor).strip()
+            )
+
+
     if fila <= 5:
+
         print(
             f"Fila {fila}: {valores}"
         )
 
-    # Buscar nuestros encabezados
+
     if (
         "Comidas" in valores
         and "Código de serie" in valores
     ):
+
         fila_encabezados = fila
+
         break
 
 
 # ============================================================
-# COMPROBAR FILA DE ENCABEZADOS
+# COMPROBAR
 # ============================================================
 
 if fila_encabezados is None:
@@ -95,7 +96,8 @@ if fila_encabezados is None:
 
 print()
 print(
-    f"Fila de encabezados encontrada: {fila_encabezados}"
+    f"Fila de encabezados: "
+    f"{fila_encabezados}"
 )
 print()
 
@@ -110,29 +112,41 @@ columna_cantidad = None
 columna_codigo = None
 
 
-for columna in range(1, hoja.max_column + 1):
+for columna in range(
+    1,
+    hoja.max_column + 1
+):
 
     valor = hoja.cell(
         row=fila_encabezados,
         column=columna
     ).value
 
+
     if valor is None:
+
         continue
 
-    nombre = str(valor).strip()
+
+    nombre = str(
+        valor
+    ).strip()
+
 
     if nombre == "Comidas":
 
         columna_producto = columna
 
+
     elif nombre == "valor":
 
         columna_precio = columna
 
+
     elif nombre == "Cantidad":
 
         columna_cantidad = columna
+
 
     elif nombre == "Código de serie":
 
@@ -140,10 +154,12 @@ for columna in range(1, hoja.max_column + 1):
 
 
 # ============================================================
-# MOSTRAR COLUMNAS
+# MOSTRAR
 # ============================================================
 
-print("Columnas detectadas:")
+print(
+    "Columnas detectadas:"
+)
 
 print(
     "Producto:",
@@ -169,13 +185,20 @@ print()
 
 
 # ============================================================
-# COMPROBAR COLUMNAS IMPORTANTES
+# COMPROBAR COLUMNAS
 # ============================================================
 
 if columna_producto is None:
 
     raise Exception(
         "No se encontró la columna 'Comidas'."
+    )
+
+
+if columna_precio is None:
+
+    raise Exception(
+        "No se encontró la columna 'valor'."
     )
 
 
@@ -187,10 +210,12 @@ if columna_codigo is None:
 
 
 # ============================================================
-# BUSCAR EL ÚLTIMO CÓDIGO EXISTENTE
+# BUSCAR ÚLTIMO CÓDIGO
 # ============================================================
 
-ultimo_codigo = codigo_inicial - 1
+ultimo_codigo = (
+    codigo_inicial - 1
+)
 
 
 for fila in range(
@@ -203,8 +228,11 @@ for fila in range(
         column=columna_codigo
     ).value
 
+
     if valor_codigo is None:
+
         continue
+
 
     try:
 
@@ -212,11 +240,16 @@ for fila in range(
             float(valor_codigo)
         )
 
+
         if numero > ultimo_codigo:
 
             ultimo_codigo = numero
 
-    except (ValueError, TypeError):
+
+    except (
+        ValueError,
+        TypeError
+    ):
 
         continue
 
@@ -233,34 +266,41 @@ print()
 # PROCESAR PRODUCTOS
 # ============================================================
 
+productos_procesados = 0
+codigos_nuevos = 0
+
+
 for fila in range(
     fila_encabezados + 1,
     hoja.max_row + 1
 ):
-
-    # --------------------------------------------------------
-    # OBTENER PRODUCTO
-    # --------------------------------------------------------
 
     producto = hoja.cell(
         row=fila,
         column=columna_producto
     ).value
 
+
     if producto is None:
+
         continue
 
-    producto = str(producto).strip()
+
+    producto = str(
+        producto
+    ).strip()
+
 
     if producto == "":
+
         continue
 
 
-    # --------------------------------------------------------
-    # OBTENER PRECIO
-    # --------------------------------------------------------
-
-    precio = None
+    # ========================================================
+    # LAS CATEGORÍAS NO RECIBEN CÓDIGO
+    #
+    # Si no tienen precio, las consideramos categorías.
+    # ========================================================
 
     if columna_precio is not None:
 
@@ -270,38 +310,54 @@ for fila in range(
         ).value
 
 
-    # --------------------------------------------------------
-    # CELDA DEL CÓDIGO
-    # --------------------------------------------------------
+        if precio is None:
+
+            print(
+                f"{producto} -> categoría, sin código"
+            )
+
+            continue
+
+
+    # ========================================================
+    # OBTENER CÓDIGO
+    # ========================================================
 
     celda_codigo = hoja.cell(
         row=fila,
         column=columna_codigo
     )
 
-    codigo_existente = celda_codigo.value
+
+    codigo_existente = (
+        celda_codigo.value
+    )
 
 
     # ========================================================
-    # PRODUCTO CON CÓDIGO
+    # CÓDIGO EXISTENTE
     # ========================================================
 
     if (
         codigo_existente is not None
-        and str(codigo_existente).strip() != ""
+        and str(
+            codigo_existente
+        ).strip() != ""
     ):
 
         codigo = str(
             codigo_existente
         ).strip()
 
+
         print(
-            f"{producto} -> código existente: {codigo}"
+            f"{producto} -> "
+            f"código existente: {codigo}"
         )
 
 
     # ========================================================
-    # PRODUCTO SIN CÓDIGO
+    # CÓDIGO NUEVO
     # ========================================================
 
     else:
@@ -312,15 +368,23 @@ for fila in range(
             ultimo_codigo
         )
 
+
         celda_codigo.value = codigo
 
+        codigos_nuevos += 1
+
+
         print(
-            f"{producto} -> NUEVO código: {codigo}"
+            f"{producto} -> "
+            f"NUEVO código: {codigo}"
         )
 
 
+    productos_procesados += 1
+
+
     # ========================================================
-    # RUTA DEL CÓDIGO DE BARRAS
+    # CREAR CÓDIGO DE BARRAS
     # ========================================================
 
     ruta_imagen = os.path.join(
@@ -329,17 +393,16 @@ for fila in range(
     )
 
 
-    # ========================================================
-    # CREAR CÓDIGO DE BARRAS
-    # ========================================================
-
-    if not os.path.exists(ruta_imagen):
+    if not os.path.exists(
+        ruta_imagen
+    ):
 
         codigo_barras = barcode.get(
             "code128",
             codigo,
             writer=ImageWriter()
         )
+
 
         codigo_barras.save(
             os.path.join(
@@ -348,32 +411,11 @@ for fila in range(
             )
         )
 
+
         print(
-            f"    Código de barras creado: {codigo}.png"
+            f"    Código de barras creado: "
+            f"{codigo}.png"
         )
-
-
-    # ========================================================
-    # INSERTAR IMAGEN
-    # ========================================================
-
-    if os.path.exists(ruta_imagen):
-
-        imagen = Image(
-            ruta_imagen
-        )
-
-        imagen.width = 180
-        imagen.height = 60
-
-        hoja.add_image(
-            imagen,
-            celda_codigo.coordinate
-        )
-
-        hoja.row_dimensions[
-            fila
-        ].height = 50
 
 
 # ============================================================
@@ -386,25 +428,55 @@ libro.save(
 
 
 # ============================================================
-# FINAL
+# RESULTADO
 # ============================================================
 
 print()
-print("==========================================")
-print("       INVENTARIO ACTUALIZADO")
-print("==========================================")
+print(
+    "=========================================="
+)
+
+print(
+    "       CÓDIGOS ACTUALIZADOS"
+)
+
+print(
+    "=========================================="
+)
+
 print()
+
+print(
+    f"Productos procesados: "
+    f"{productos_procesados}"
+)
+
+print(
+    f"Códigos nuevos: "
+    f"{codigos_nuevos}"
+)
+
 print(
     f"Excel: {archivo_excel}"
 )
+
 print(
-    f"Códigos: {carpeta_codigos}"
+    f"Carpeta de códigos: "
+    f"{carpeta_codigos}"
 )
+
 print()
+
 print(
     "Los códigos existentes fueron conservados."
 )
+
 print(
-    "Los productos nuevos recibieron códigos nuevos."
+    "Las categorías no recibieron códigos."
 )
+
+print(
+    "Los códigos de barras se guardaron como PNG."
+)
+
 print()
