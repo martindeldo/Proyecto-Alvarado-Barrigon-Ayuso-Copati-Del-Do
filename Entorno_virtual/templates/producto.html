@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width,
+                 initial-scale=1.0"
+    >
+
+    <title>Producto</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for(
+            'static',
+            filename='css/producto.css'
+        ) }}"
+    >
+
+</head>
+
+
+<body>
+
+<header>
+
+    {% if producto %}
+
+        <h1>✏️ Editar producto</h1>
+
+    {% else %}
+
+        <h1>➕ Agregar producto</h1>
+
+    {% endif %}
+
+</header>
+
+
+<main>
+
+<form method="POST">
+
+
+    <label>
+        Código de barras
+    </label>
+
+    <input
+        type="text"
+        name="codigo"
+        value="{{ producto.codigo
+            if producto else '' }}"
+        {% if producto %}
+            readonly
+        {% endif %}
+        required
+    >
+
+
+    <label>
+        Nombre del producto
+    </label>
+
+    <input
+        type="text"
+        name="nombre"
+        value="{{ producto.nombre
+            if producto else '' }}"
+        required
+    >
+
+
+    <label>
+        Precio
+    </label>
+
+    <input
+        type="number"
+        name="precio"
+        step="0.01"
+        min="0"
+        value="{{ producto.precio
+            if producto else '' }}"
+        required
+    >
+
+
+    <label>
+        Cantidad en stock
+    </label>
+
+    <input
+        type="number"
+        name="stock"
+        min="0"
+        value="{{ producto.stock
+            if producto else 0 }}"
+        required
+    >
+
+
+    <button
+        type="submit"
+        class="boton"
+    >
+        Guardar
+    </button>
+
+</form>
+
+
+<br>
+
+<a href="/stock">
+    ← Volver al stock
+</a>
+
+</main>
+
+</body>
+
+</html>
