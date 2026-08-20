@@ -1,12 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 
+/* =========================================================
+   RESET
+   ========================================================= */
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+
+/* =========================================================
+   BODY
+   ========================================================= */
 
 body {
     min-height: 100vh;
@@ -23,9 +31,9 @@ body {
 }
 
 
-/* =========================
+/* =========================================================
    HEADER
-   ========================= */
+   ========================================================= */
 
 header {
     min-height: 90px;
@@ -66,9 +74,9 @@ header p {
 }
 
 
-/* =========================
+/* =========================================================
    USUARIO
-   ========================= */
+   ========================================================= */
 
 .usuario {
     display: flex;
@@ -105,9 +113,9 @@ header p {
 }
 
 
-/* =========================
+/* =========================================================
    MAIN
-   ========================= */
+   ========================================================= */
 
 main {
     width: min(1200px, 92%);
@@ -116,12 +124,14 @@ main {
 }
 
 
-/* =========================
-   ACCIONES
-   ========================= */
+/* =========================================================
+   ACCIONES PRINCIPALES
+   ========================================================= */
 
 .acciones {
     display: flex;
+
+    flex-wrap: wrap;
 
     gap: 15px;
 
@@ -129,10 +139,14 @@ main {
 }
 
 
+/* =========================================================
+   BOTONES GENERALES
+   ========================================================= */
+
 .btn {
     border: none;
 
-    padding: 15px 22px;
+    padding: 14px 22px;
 
     border-radius: 10px;
 
@@ -140,11 +154,24 @@ main {
 
     font-family: inherit;
 
+    font-size: 14px;
+
     font-weight: 700;
 
     cursor: pointer;
 
-    transition: 0.2s;
+    text-decoration: none;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 
@@ -153,19 +180,296 @@ main {
 }
 
 
-.agregar {
+/* =========================================================
+   BOTÓN ENTRADA
+   ========================================================= */
+
+.btn.agregar {
     background: #2563eb;
+
+    color: white;
+
+    box-shadow:
+        0 4px 10px rgba(37, 99, 235, 0.15);
 }
 
 
-.actualizar {
+.btn.agregar:hover {
+    background: #1d4ed8;
+
+    box-shadow:
+        0 7px 16px rgba(37, 99, 235, 0.25);
+}
+
+
+/* =========================================================
+   BOTÓN SALIDA
+   ========================================================= */
+
+.btn.actualizar {
     background: #16a34a;
+
+    color: white;
+
+    box-shadow:
+        0 4px 10px rgba(22, 163, 74, 0.15);
 }
 
 
-/* =========================
-   PANEL
-   ========================= */
+.btn.actualizar:hover {
+    background: #15803d;
+
+    box-shadow:
+        0 7px 16px rgba(22, 163, 74, 0.25);
+}
+
+
+/* =========================================================
+   BOTÓN STOCK BAJO
+   ========================================================= */
+
+.btn.stock-bajo {
+    background: #dc2626;
+
+    color: white;
+
+    box-shadow:
+        0 4px 10px rgba(220, 38, 38, 0.15);
+}
+
+
+.btn.stock-bajo:hover {
+    background: #b91c1c;
+
+    box-shadow:
+        0 7px 16px rgba(220, 38, 38, 0.25);
+}
+
+
+/* =========================================================
+   BOTÓN MOVIMIENTOS
+   ========================================================= */
+
+.btn.movimientos {
+    background: #7c3aed;
+
+    color: white;
+
+    box-shadow:
+        0 4px 10px rgba(124, 58, 237, 0.15);
+}
+
+
+.btn.movimientos:hover {
+    background: #6d28d9;
+
+    box-shadow:
+        0 7px 16px rgba(124, 58, 237, 0.25);
+}
+
+
+/* =========================================================
+   MENSAJE DE ERROR
+   ========================================================= */
+
+.mensaje-error {
+    margin-bottom: 20px;
+
+    padding: 15px 20px;
+
+    background: #fee2e2;
+
+    border: 1px solid #fca5a5;
+
+    color: #991b1b;
+
+    border-radius: 10px;
+
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   FORMULARIO
+   ========================================================= */
+
+.formulario {
+    margin-bottom: 25px;
+
+    padding: 25px;
+
+    background: white;
+
+    border: 1px solid #e2e8f0;
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 10px 30px rgba(15, 23, 42, 0.07);
+}
+
+
+.formulario h2 {
+    margin-bottom: 20px;
+
+    font-size: 20px;
+
+    color: #0f172a;
+}
+
+
+.formulario label {
+    display: block;
+
+    margin-top: 12px;
+
+    margin-bottom: 6px;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    color: #475569;
+}
+
+
+.formulario input {
+    width: 100%;
+
+    height: 45px;
+
+    padding: 0 14px;
+
+    border: 1px solid #cbd5e1;
+
+    border-radius: 9px;
+
+    outline: none;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    color: #0f172a;
+
+    background: white;
+
+    transition:
+        border 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.formulario input:focus {
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+
+/* =========================================================
+   BOTONES DEL FORMULARIO
+   ========================================================= */
+
+.formulario-botones {
+    display: flex;
+
+    gap: 12px;
+
+    margin-top: 20px;
+}
+
+
+.formulario button {
+    border: none;
+
+    padding: 13px 22px;
+
+    border-radius: 10px;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+/* =========================================================
+   CONFIRMAR
+   ========================================================= */
+
+.confirmar {
+    background: #2563eb;
+
+    color: white;
+
+    box-shadow:
+        0 4px 10px rgba(37, 99, 235, 0.20);
+}
+
+
+.confirmar:hover {
+    background: #1d4ed8;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 7px 16px rgba(37, 99, 235, 0.30);
+}
+
+
+.confirmar:active {
+    transform: translateY(0);
+
+    box-shadow:
+        0 3px 8px rgba(37, 99, 235, 0.20);
+}
+
+
+/* =========================================================
+   CANCELAR
+   ========================================================= */
+
+.cancelar {
+    background: #e2e8f0;
+
+    color: #334155;
+
+    border: 1px solid #cbd5e1 !important;
+}
+
+
+.cancelar:hover {
+    background: #cbd5e1;
+
+    color: #0f172a;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 5px 12px rgba(15, 23, 42, 0.10);
+}
+
+
+.cancelar:active {
+    transform: translateY(0);
+
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   PANEL DE PRODUCTOS
+   ========================================================= */
 
 .panel {
     background: white;
@@ -177,9 +481,13 @@ main {
     overflow: hidden;
 
     box-shadow:
-        0 10px 30px rgba(15,23,42,0.07);
+        0 10px 30px rgba(15, 23, 42, 0.07);
 }
 
+
+/* =========================================================
+   CABECERA DEL PANEL
+   ========================================================= */
 
 .panel-header {
     padding: 25px;
@@ -213,17 +521,33 @@ main {
     outline: none;
 
     font-family: inherit;
+
+    font-size: 14px;
+
+    transition:
+        border 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 
 .panel-header input:focus {
     border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.10);
 }
 
 
-/* =========================
+/* =========================================================
    TABLA
-   ========================= */
+   ========================================================= */
+
+.tabla-container {
+    width: 100%;
+
+    overflow-x: auto;
+}
+
 
 table {
     width: 100%;
@@ -258,16 +582,25 @@ td {
 }
 
 
+tbody tr {
+    transition: background 0.2s ease;
+}
+
+
 tbody tr:hover {
     background: #f8fafc;
 }
 
 
-/* =========================
+/* =========================================================
    ESTADO
-   ========================= */
+   ========================================================= */
 
 .estado {
+    display: inline-flex;
+
+    align-items: center;
+
     padding: 6px 10px;
 
     border-radius: 20px;
@@ -278,19 +611,57 @@ tbody tr:hover {
 }
 
 
-.disponible {
+/* =========================================================
+   DISPONIBLE
+   ========================================================= */
+
+.estado.disponible {
     background: #dcfce7;
 
     color: #15803d;
 }
 
 
-/* =========================
-   ACCIONES TABLA
-   ========================= */
+/* =========================================================
+   STOCK BAJO
+   ========================================================= */
+
+.estado.bajo {
+    background: #fee2e2;
+
+    color: #dc2626;
+
+    border: 1px solid #fecaca;
+}
+
+
+/* =========================================================
+   SIN PRODUCTOS
+   ========================================================= */
+
+.sin-productos {
+    text-align: center;
+
+    padding: 35px;
+
+    color: #64748b;
+}
+
+
+/* =========================================================
+   BOTONES DE TABLA
+   ========================================================= */
 
 .editar,
 .eliminar {
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    text-decoration: none;
+
     border: none;
 
     width: 34px;
@@ -307,17 +678,21 @@ tbody tr:hover {
 
 .editar {
     background: #dbeafe;
+
+    color: #2563eb;
 }
 
 
 .eliminar {
     background: #fee2e2;
+
+    color: #dc2626;
 }
 
 
-/* =========================
+/* =========================================================
    VOLVER
-   ========================= */
+   ========================================================= */
 
 .volver {
     display: inline-block;
@@ -331,6 +706,8 @@ tbody tr:hover {
     font-size: 14px;
 
     font-weight: 600;
+
+    transition: color 0.2s ease;
 }
 
 
@@ -339,11 +716,13 @@ tbody tr:hover {
 }
 
 
-/* =========================
+/* =========================================================
    RESPONSIVE
-   ========================= */
+   ========================================================= */
 
 @media (max-width: 750px) {
+
+    /* HEADER */
 
     header {
         padding: 20px;
@@ -363,18 +742,56 @@ tbody tr:hover {
     }
 
 
+    /* MAIN */
+
     main {
         width: 94%;
+
+        margin: 25px auto;
     }
 
+
+    /* ACCIONES */
+
+    .acciones {
+        display: grid;
+
+        grid-template-columns: 1fr 1fr;
+
+        gap: 10px;
+    }
+
+
+    .acciones .btn {
+        width: 100%;
+
+        padding: 13px 10px;
+
+        font-size: 13px;
+    }
+
+
+    /* FORMULARIO */
+
+    .formulario {
+        padding: 20px;
+    }
+
+
+    .formulario-botones {
+        flex-direction: column;
+    }
+
+
+    .formulario-botones button {
+        width: 100%;
+    }
+
+
+    /* PANEL */
 
     .panel {
-        overflow-x: auto;
-    }
-
-
-    table {
-        min-width: 750px;
+        overflow: hidden;
     }
 
 
@@ -387,7 +804,62 @@ tbody tr:hover {
     }
 
 
+    .panel-header form {
+        width: 100%;
+    }
+
+
     .panel-header input {
         width: 100%;
     }
+
+
+    /* TABLA */
+
+    table {
+        min-width: 750px;
+    }
+
+}
+
+
+/* =========================================================
+   MÓVILES PEQUEÑOS
+   ========================================================= */
+
+@media (max-width: 450px) {
+
+    header h1 {
+        font-size: 21px;
+    }
+
+
+    header p {
+        font-size: 12px;
+    }
+
+
+    .usuario {
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 10px;
+    }
+
+
+    .acciones {
+        grid-template-columns: 1fr;
+    }
+
+
+    .formulario {
+        padding: 18px;
+    }
+
+
+    .panel-header {
+        padding: 20px;
+    }
+
 }

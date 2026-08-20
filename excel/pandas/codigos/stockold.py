@@ -1,5 +1,7 @@
 import os
 import shutil
+import tempfile
+import traceback
 from datetime import datetime
 
 from openpyxl import load_workbook
@@ -9,9 +11,40 @@ from openpyxl import load_workbook
 # CONFIGURACIÓN
 # ============================================================
 
-archivo_excel = "productos_con_barras.xlsx"
+# Carpeta donde está este archivo stock.py
+carpeta_programa = os.path.dirname(
+    os.path.abspath(__file__)
+)
 
-carpeta_backups = "backups"
+
+# ============================================================
+# ARCHIVO EXCEL PRINCIPAL
+# ============================================================
+
+archivo_excel = os.path.join(
+    carpeta_programa,
+    "productos_corregido.xlsx"
+)
+
+
+# ============================================================
+# CARPETA DE BACKUPS
+# ============================================================
+
+carpeta_backups = os.path.join(
+    carpeta_programa,
+    "backups"
+)
+
+os.makedirs(
+    carpeta_backups,
+    exist_ok=True
+)
+
+
+# ============================================================
+# CONFIGURACIÓN DEL SISTEMA
+# ============================================================
 
 nombre_hoja_movimientos = "Movimientos"
 
@@ -19,12 +52,128 @@ stock_minimo = 5
 
 
 # ============================================================
-# CREAR CARPETA DE BACKUPS
+# COMPROBAR QUE EL EXCEL EXISTE
 # ============================================================
 
-os.makedirs(
-    carpeta_backups,
-    exist_ok=True
+if not os.path.isfile(archivo_excel):
+
+    raise Exception(
+        "\nNo existe el archivo Excel:\n"
+        f"{archivo_excel}\n\n"
+        "Comprobá que el nombre del archivo sea correcto."
+    )
+
+
+# ============================================================
+# ABRIR EXCEL
+# ============================================================
+
+try:
+
+    libro = load_workbook(
+        archivo_excel
+    )
+
+except Exception as error:
+
+    raise Exception(
+        "\nNo se pudo abrir el archivo Excel.\n\n"
+        f"Archivo:\n{archivo_excel}\n\n"
+        f"Error:\n{error}\n\n"
+        "El archivo puede estar corrupto o no ser "
+        "un archivo .xlsx válido."
+    )
+
+
+# ============================================================
+# MOSTRAR HOJAS ENCONTRADAS
+# ============================================================
+
+print()
+print(
+    "=========================================="
+)
+
+print(
+    "          HOJAS DEL EXCEL"
+)
+
+print(
+    "=========================================="
+)
+
+for nombre in libro.sheetnames:
+
+    print(
+        f"- {nombre}"
+    )
+
+print()
+
+
+# ============================================================
+# BUSCAR HOJA DE PRODUCTOS
+# ============================================================
+
+def buscar_hoja_productos(libro):
+
+    for hoja_busqueda in libro.worksheets:
+
+        for fila in range(
+            1,
+            hoja_busqueda.max_row + 1
+        ):
+
+            valores = []
+
+            for columna in range(
+                1,
+                hoja_busqueda.max_column + 1
+            ):
+
+                valor = hoja_busqueda.cell(
+                    row=fila,
+                    column=columna
+                ).value
+
+                if valor is not None:
+
+                    valores.append(
+                        str(valor).strip()
+                    )
+
+            if (
+                "Comidas" in valores
+                and "Código de serie" in valores
+            ):
+
+                return hoja_busqueda
+
+    return None
+
+
+hoja = buscar_hoja_productos(
+    libro
+)
+
+
+if hoja is None:
+
+    raise Exception(
+        "\nNo se pudo encontrar la hoja de productos.\n\n"
+        "El programa buscó una hoja que contenga las columnas:\n"
+        "- Comidas\n"
+        "- Código de serie\n\n"
+        "Hojas encontradas:\n"
+        + "\n".join(
+            f"- {nombre}"
+            for nombre in libro.sheetnames
+        )
+    )
+
+
+print(
+    f"Hoja de productos: {hoja.title}"
 )
 
 
@@ -51,13 +200,11 @@ def buscar_encabezados(hoja):
                 column=columna
             ).value
 
-
             if valor is not None:
 
                 valores.append(
                     str(valor).strip()
                 )
-
 
         if (
             "Comidas" in valores
@@ -66,34 +213,8 @@ def buscar_encabezados(hoja):
 
             return fila
 
-
     return None
 
-
-# ============================================================
-# ABRIR EXCEL
-# ============================================================
-
-if not os.path.exists(
-    archivo_excel
-):
-
-    raise Exception(
-        f"No existe el archivo: "
-        f"{archivo_excel}"
-    )
-
-
-libro = load_workbook(
-    archivo_excel
-)
-
-hoja = libro.active
-
-
-# ============================================================
-# BUSCAR ENCABEZADOS
-# ============================================================
 
 fila_encabezados = buscar_encabezados(
     hoja
@@ -103,14 +224,12 @@ fila_encabezados = buscar_encabezados(
 if fila_encabezados is None:
 
     raise Exception(
-        "No se encontró la fila de encabezados."
+        "\nNo se encontró la fila de encabezados."
     )
 
 
-print()
 print(
-    f"Fila de encabezados: "
-    f"{fila_encabezados}"
+    f"Fila de encabezados: {fila_encabezados}"
 )
 
 
@@ -134,31 +253,25 @@ for columna in range(
         column=columna
     ).value
 
-
     if valor is None:
 
         continue
-
 
     nombre = str(
         valor
     ).strip()
 
-
     if nombre == "Comidas":
 
         columna_producto = columna
-
 
     elif nombre == "valor":
 
         columna_precio = columna
 
-
     elif nombre == "Cantidad":
 
         columna_cantidad = columna
-
 
     elif nombre == "Código de serie":
 
@@ -166,44 +279,54 @@ for columna in range(
 
 
 # ============================================================
-# COMPROBAR
+# COMPROBAR COLUMNAS
 # ============================================================
 
 if columna_producto is None:
 
     raise Exception(
-        "No se encontró 'Comidas'."
+        "No se encontró la columna 'Comidas'."
     )
 
 
 if columna_cantidad is None:
 
     raise Exception(
-        "No se encontró 'Cantidad'."
+        "No se encontró la columna 'Cantidad'."
     )
 
 
 if columna_codigo is None:
 
     raise Exception(
-        "No se encontró 'Código de serie'."
+        "No se encontró la columna 'Código de serie'."
     )
 
 
 print(
-    f"Columna producto: "
-    f"{columna_producto}"
+    f"Columna producto: {columna_producto}"
 )
 
 print(
-    f"Columna cantidad: "
-    f"{columna_cantidad}"
+    f"Columna cantidad: {columna_cantidad}"
 )
 
 print(
-    f"Columna código: "
-    f"{columna_codigo}"
+    f"Columna código: {columna_codigo}"
 )
+
+
+if columna_precio is not None:
+
+    print(
+        f"Columna precio: {columna_precio}"
+    )
+
+else:
+
+    print(
+        "Columna precio: no encontrada"
+    )
 
 print()
 
@@ -218,13 +341,11 @@ def convertir_cantidad(valor):
 
         return 0
 
-
     try:
 
         return int(
             float(valor)
         )
-
 
     except (
         ValueError,
@@ -240,10 +361,13 @@ def convertir_cantidad(valor):
 
 def buscar_producto(codigo):
 
+    if codigo is None:
+
+        return None
+
     codigo = str(
         codigo
     ).strip()
-
 
     for fila in range(
         fila_encabezados + 1,
@@ -255,27 +379,23 @@ def buscar_producto(codigo):
             column=columna_codigo
         ).value
 
-
         if valor_codigo is None:
 
             continue
-
 
         codigo_excel = str(
             valor_codigo
         ).strip()
 
-
         if codigo_excel == codigo:
 
             return fila
-
 
     return None
 
 
 # ============================================================
-# CREAR HOJA MOVIMIENTOS
+# CREAR / BUSCAR HOJA MOVIMIENTOS
 # ============================================================
 
 if nombre_hoja_movimientos in libro.sheetnames:
@@ -284,18 +404,26 @@ if nombre_hoja_movimientos in libro.sheetnames:
         nombre_hoja_movimientos
     ]
 
+    print(
+        "Hoja 'Movimientos': encontrada."
+    )
+
 else:
 
     hoja_movimientos = libro.create_sheet(
         nombre_hoja_movimientos
     )
 
+    print(
+        "Hoja 'Movimientos': creada automáticamente."
+    )
+
 
 # ============================================================
-# ENCABEZADOS MOVIMIENTOS
+# ENCABEZADOS DE MOVIMIENTOS
 # ============================================================
 
-encabezados = [
+encabezados_movimientos = [
     "Fecha",
     "Código",
     "Producto",
@@ -306,27 +434,27 @@ encabezados = [
 ]
 
 
-if (
-    hoja_movimientos.max_row == 1
-    and hoja_movimientos.cell(
-        row=1,
-        column=1
-    ).value is None
+# ============================================================
+# CREAR ENCABEZADOS SI NO EXISTEN
+# ============================================================
+
+for columna, nombre in enumerate(
+    encabezados_movimientos,
+    start=1
 ):
 
-    for columna, nombre in enumerate(
-        encabezados,
-        start=1
-    ):
+    celda = hoja_movimientos.cell(
+        row=1,
+        column=columna
+    )
 
-        hoja_movimientos.cell(
-            row=1,
-            column=columna
-        ).value = nombre
+    if celda.value is None:
+
+        celda.value = nombre
 
 
 # ============================================================
-# BACKUP
+# CREAR BACKUP
 # ============================================================
 
 def crear_backup():
@@ -335,25 +463,389 @@ def crear_backup():
         "%Y-%m-%d_%H-%M-%S"
     )
 
-
     nombre_backup = (
         f"productos_{fecha}.xlsx"
     )
-
 
     ruta_backup = os.path.join(
         carpeta_backups,
         nombre_backup
     )
 
-
     shutil.copy2(
         archivo_excel,
         ruta_backup
     )
 
-
     return ruta_backup
+
+
+# ============================================================
+# VALIDAR ARCHIVO EXCEL
+# ============================================================
+
+def validar_excel(ruta):
+
+    libro_prueba = None
+
+    try:
+
+        libro_prueba = load_workbook(
+            ruta,
+            read_only=True
+        )
+
+        # Comprobar que exista Movimientos
+
+        if (
+            nombre_hoja_movimientos
+            not in libro_prueba.sheetnames
+        ):
+
+            print()
+            print(
+                "ERROR: no existe la hoja "
+                "'Movimientos' en el archivo guardado."
+            )
+
+            return False
+
+        return True
+
+    except Exception as error:
+
+        print()
+        print(
+            "ERROR: el archivo generado "
+            "no pudo ser validado."
+        )
+
+        print(
+            error
+        )
+
+        return False
+
+    finally:
+
+        if libro_prueba is not None:
+
+            try:
+
+                libro_prueba.close()
+
+            except Exception:
+
+                pass
+
+
+# ============================================================
+# GUARDAR EXCEL DE FORMA SEGURA
+# ============================================================
+
+def guardar_excel_seguro():
+
+    global libro
+    global hoja
+    global hoja_movimientos
+
+    directorio = carpeta_programa
+
+    ruta_temporal = None
+
+    try:
+
+        # ----------------------------------------------------
+        # CREAR ARCHIVO TEMPORAL
+        # ----------------------------------------------------
+
+        archivo_temporal = tempfile.NamedTemporaryFile(
+            prefix="stock_temporal_",
+            suffix=".xlsx",
+            dir=directorio,
+            delete=False
+        )
+
+        ruta_temporal = archivo_temporal.name
+
+        archivo_temporal.close()
+
+        print()
+        print(
+            "Guardando Excel..."
+        )
+
+        # ----------------------------------------------------
+        # GUARDAR
+        # ----------------------------------------------------
+
+        libro.save(
+            ruta_temporal
+        )
+
+        print(
+            "Archivo temporal creado."
+        )
+
+        # ----------------------------------------------------
+        # VALIDAR
+        # ----------------------------------------------------
+
+        print(
+            "Comprobando archivo..."
+        )
+
+        if not validar_excel(
+            ruta_temporal
+        ):
+
+            print()
+            print(
+                "El archivo temporal no es válido."
+            )
+
+            print(
+                "El Excel original NO fue reemplazado."
+            )
+
+            return False
+
+        # ----------------------------------------------------
+        # REEMPLAZAR ORIGINAL
+        # ----------------------------------------------------
+
+        print(
+            "Reemplazando archivo original..."
+        )
+
+        os.replace(
+            ruta_temporal,
+            archivo_excel
+        )
+
+        ruta_temporal = None
+
+        # ----------------------------------------------------
+        # CERRAR LIBRO ACTUAL
+        # ----------------------------------------------------
+
+        try:
+
+            libro.close()
+
+        except Exception:
+
+            pass
+
+        # ----------------------------------------------------
+        # VOLVER A ABRIR EL EXCEL
+        # ----------------------------------------------------
+
+        print(
+            "Recargando Excel..."
+        )
+
+        libro = load_workbook(
+            archivo_excel
+        )
+
+        # ----------------------------------------------------
+        # VOLVER A BUSCAR HOJA DE PRODUCTOS
+        # ----------------------------------------------------
+
+        hoja = buscar_hoja_productos(
+            libro
+        )
+
+        if hoja is None:
+
+            raise Exception(
+                "No se pudo encontrar la hoja "
+                "de productos después de guardar."
+            )
+
+        # ----------------------------------------------------
+        # VOLVER A BUSCAR ENCABEZADOS
+        # ----------------------------------------------------
+
+        global fila_encabezados
+        global columna_producto
+        global columna_precio
+        global columna_cantidad
+        global columna_codigo
+
+        fila_encabezados = buscar_encabezados(
+            hoja
+        )
+
+        if fila_encabezados is None:
+
+            raise Exception(
+                "No se encontraron los encabezados "
+                "después de guardar."
+            )
+
+        # ----------------------------------------------------
+        # VOLVER A BUSCAR COLUMNAS
+        # ----------------------------------------------------
+
+        columna_producto = None
+        columna_precio = None
+        columna_cantidad = None
+        columna_codigo = None
+
+        for columna in range(
+            1,
+            hoja.max_column + 1
+        ):
+
+            valor = hoja.cell(
+                row=fila_encabezados,
+                column=columna
+            ).value
+
+            if valor is None:
+
+                continue
+
+            nombre = str(
+                valor
+            ).strip()
+
+            if nombre == "Comidas":
+
+                columna_producto = columna
+
+            elif nombre == "valor":
+
+                columna_precio = columna
+
+            elif nombre == "Cantidad":
+
+                columna_cantidad = columna
+
+            elif nombre == "Código de serie":
+
+                columna_codigo = columna
+
+        # ----------------------------------------------------
+        # VOLVER A BUSCAR MOVIMIENTOS
+        # ----------------------------------------------------
+
+        if (
+            nombre_hoja_movimientos
+            in libro.sheetnames
+        ):
+
+            hoja_movimientos = libro[
+                nombre_hoja_movimientos
+            ]
+
+        else:
+
+            hoja_movimientos = libro.create_sheet(
+                nombre_hoja_movimientos
+            )
+
+            for columna, nombre in enumerate(
+                encabezados_movimientos,
+                start=1
+            ):
+
+                hoja_movimientos.cell(
+                    row=1,
+                    column=columna
+                ).value = nombre
+
+        print(
+            "Excel guardado y recargado correctamente."
+        )
+
+        return True
+
+    except Exception as error:
+
+        print()
+        print(
+            "=========================================="
+        )
+
+        print(
+            "       ERROR AL GUARDAR EL EXCEL"
+        )
+
+        print(
+            "=========================================="
+        )
+
+        print()
+
+        print(
+            "Mensaje del error:"
+        )
+
+        print(
+            error
+        )
+
+        print()
+
+        print(
+            "=========================================="
+        )
+
+        print(
+            "          TRACEBACK COMPLETO"
+        )
+
+        print(
+            "=========================================="
+        )
+
+        print()
+
+        traceback.print_exc()
+
+        print()
+
+        print(
+            "=========================================="
+        )
+
+        print(
+            "El archivo original NO fue reemplazado."
+        )
+
+        print(
+            "=========================================="
+        )
+
+        print()
+
+        return False
+
+    finally:
+
+        # ----------------------------------------------------
+        # ELIMINAR TEMPORAL
+        # ----------------------------------------------------
+
+        if (
+            ruta_temporal is not None
+            and os.path.exists(
+                ruta_temporal
+            )
+        ):
+
+            try:
+
+                os.remove(
+                    ruta_temporal
+                )
+
+            except Exception:
+
+                pass
 
 
 # ============================================================
@@ -370,6 +862,13 @@ def registrar_movimiento(
         codigo
     ).strip()
 
+    operacion = str(
+        operacion
+    ).strip().upper()
+
+    # --------------------------------------------------------
+    # CONVERTIR CANTIDAD
+    # --------------------------------------------------------
 
     try:
 
@@ -377,24 +876,26 @@ def registrar_movimiento(
             cantidad
         )
 
+    except (
+        ValueError,
+        TypeError
+    ):
 
-    except ValueError:
-
+        print()
         print(
             "La cantidad debe ser un número entero."
         )
 
         return
 
-
     if cantidad <= 0:
 
+        print()
         print(
             "La cantidad debe ser mayor que 0."
         )
 
         return
-
 
     # --------------------------------------------------------
     # BUSCAR PRODUCTO
@@ -404,22 +905,21 @@ def registrar_movimiento(
         codigo
     )
 
-
     if fila is None:
 
         print()
         print(
             "Producto no encontrado."
         )
+
         print(
             f"Código: {codigo}"
         )
 
         return
 
-
     # --------------------------------------------------------
-    # PRODUCTO
+    # OBTENER PRODUCTO
     # --------------------------------------------------------
 
     producto = hoja.cell(
@@ -427,9 +927,8 @@ def registrar_movimiento(
         column=columna_producto
     ).value
 
-
     # --------------------------------------------------------
-    # STOCK ACTUAL
+    # CELDA DEL STOCK
     # --------------------------------------------------------
 
     celda_stock = hoja.cell(
@@ -437,14 +936,12 @@ def registrar_movimiento(
         column=columna_cantidad
     )
 
-
     stock_anterior = convertir_cantidad(
         celda_stock.value
     )
 
-
     # ========================================================
-    # ENTRADA
+    # CALCULAR STOCK NUEVO
     # ========================================================
 
     if operacion == "ENTRADA":
@@ -454,17 +951,11 @@ def registrar_movimiento(
             + cantidad
         )
 
-
-    # ========================================================
-    # SALIDA
-    # ========================================================
-
     elif operacion == "SALIDA":
 
         if cantidad > stock_anterior:
 
             print()
-
             print(
                 "=========================================="
             )
@@ -484,34 +975,30 @@ def registrar_movimiento(
             )
 
             print(
-                f"Stock disponible: "
-                f"{stock_anterior}"
+                f"Stock disponible: {stock_anterior}"
             )
 
             print(
-                f"Cantidad solicitada: "
-                f"{cantidad}"
+                f"Cantidad solicitada: {cantidad}"
             )
 
             print()
 
             return
 
-
         stock_nuevo = (
             stock_anterior
             - cantidad
         )
 
-
     else:
 
+        print()
         print(
             "Operación inválida."
         )
 
         return
-
 
     # ========================================================
     # CREAR BACKUP
@@ -521,124 +1008,138 @@ def registrar_movimiento(
 
         ruta_backup = crear_backup()
 
-
     except Exception as error:
 
         print()
+        print(
+            "=========================================="
+        )
 
         print(
-            "No se pudo crear el backup."
+            "       NO SE PUDO CREAR EL BACKUP"
         )
+
+        print(
+            "=========================================="
+        )
+
+        print()
 
         print(
             error
         )
 
+        print()
+
+        print(
+            "El Excel no fue modificado."
+        )
+
         return
 
+    # ========================================================
+    # GUARDAR VALOR ORIGINAL
+    # ========================================================
+
+    valor_stock_original = celda_stock.value
 
     # ========================================================
-    # ACTUALIZAR STOCK
+    # MODIFICAR STOCK
     # ========================================================
 
-    celda_stock.value = (
-        stock_nuevo
-    )
-
+    celda_stock.value = stock_nuevo
 
     # ========================================================
-    # REGISTRAR MOVIMIENTO
+    # CREAR REGISTRO DE MOVIMIENTO
     # ========================================================
 
     nueva_fila = (
         hoja_movimientos.max_row + 1
     )
 
-
     hoja_movimientos.cell(
         row=nueva_fila,
         column=1
     ).value = datetime.now()
-
 
     hoja_movimientos.cell(
         row=nueva_fila,
         column=2
     ).value = codigo
 
-
     hoja_movimientos.cell(
         row=nueva_fila,
         column=3
     ).value = producto
-
 
     hoja_movimientos.cell(
         row=nueva_fila,
         column=4
     ).value = operacion
 
-
     hoja_movimientos.cell(
         row=nueva_fila,
         column=5
     ).value = cantidad
-
 
     hoja_movimientos.cell(
         row=nueva_fila,
         column=6
     ).value = stock_anterior
 
-
     hoja_movimientos.cell(
         row=nueva_fila,
         column=7
     ).value = stock_nuevo
 
-
     # ========================================================
     # GUARDAR
     # ========================================================
 
-    try:
+    guardado = guardar_excel_seguro()
 
-        libro.save(
-            archivo_excel
+    # ========================================================
+    # SI FALLÓ
+    # ========================================================
+
+    if not guardado:
+
+        print()
+        print(
+            "=========================================="
         )
 
+        print(
+            "       CAMBIO NO APLICADO"
+        )
 
-    except Exception as error:
+        print(
+            "=========================================="
+        )
 
         print()
 
         print(
-            "ERROR AL GUARDAR EL EXCEL."
+            "El archivo original fue conservado."
         )
 
         print(
-            error
-        )
-
-        print()
-
-        print(
-            "El backup está en:"
+            "Backup disponible en:"
         )
 
         print(
             ruta_backup
         )
 
-        return
+        print()
 
+        return
 
     # ========================================================
     # RESULTADO
     # ========================================================
 
     print()
-
     print(
         "=========================================="
     )
@@ -683,9 +1184,11 @@ def registrar_movimiento(
         f"Backup creado: {ruta_backup}"
     )
 
+    print()
+
 
 # ============================================================
-# BUSCAR PRODUCTO
+# MOSTRAR PRODUCTO
 # ============================================================
 
 def mostrar_producto(codigo):
@@ -693,7 +1196,6 @@ def mostrar_producto(codigo):
     fila = buscar_producto(
         codigo
     )
-
 
     if fila is None:
 
@@ -704,12 +1206,10 @@ def mostrar_producto(codigo):
 
         return
 
-
     producto = hoja.cell(
         row=fila,
         column=columna_producto
     ).value
-
 
     stock = convertir_cantidad(
         hoja.cell(
@@ -718,15 +1218,12 @@ def mostrar_producto(codigo):
         ).value
     )
 
-
     codigo_excel = hoja.cell(
         row=fila,
         column=columna_codigo
     ).value
 
-
     precio = None
-
 
     if columna_precio is not None:
 
@@ -735,9 +1232,7 @@ def mostrar_producto(codigo):
             column=columna_precio
         ).value
 
-
     print()
-
     print(
         "=========================================="
     )
@@ -787,9 +1282,7 @@ def mostrar_stock_bajo():
 
     encontrados = 0
 
-
     print()
-
     print(
         "=========================================="
     )
@@ -804,7 +1297,6 @@ def mostrar_stock_bajo():
 
     print()
 
-
     for fila in range(
         fila_encabezados + 1,
         hoja.max_row + 1
@@ -815,17 +1307,17 @@ def mostrar_stock_bajo():
             column=columna_producto
         ).value
 
-
         codigo = hoja.cell(
             row=fila,
             column=columna_codigo
         ).value
 
-
-        if producto is None or codigo is None:
+        if (
+            producto is None
+            or codigo is None
+        ):
 
             continue
-
 
         stock = convertir_cantidad(
             hoja.cell(
@@ -833,7 +1325,6 @@ def mostrar_stock_bajo():
                 column=columna_cantidad
             ).value
         )
-
 
         if stock <= stock_minimo:
 
@@ -845,13 +1336,11 @@ def mostrar_stock_bajo():
 
             encontrados += 1
 
-
     if encontrados == 0:
 
         print(
             "No hay productos con stock bajo."
         )
-
 
     print()
 
@@ -863,7 +1352,6 @@ def mostrar_stock_bajo():
 def mostrar_movimientos():
 
     print()
-
     print(
         "=========================================="
     )
@@ -878,15 +1366,15 @@ def mostrar_movimientos():
 
     print()
 
-
     if hoja_movimientos.max_row <= 1:
 
         print(
             "Todavía no hay movimientos."
         )
 
-        return
+        print()
 
+        return
 
     for fila in range(
         2,
@@ -898,36 +1386,30 @@ def mostrar_movimientos():
             column=1
         ).value
 
-
         codigo = hoja_movimientos.cell(
             row=fila,
             column=2
         ).value
-
 
         producto = hoja_movimientos.cell(
             row=fila,
             column=3
         ).value
 
-
         operacion = hoja_movimientos.cell(
             row=fila,
             column=4
         ).value
-
 
         cantidad = hoja_movimientos.cell(
             row=fila,
             column=5
         ).value
 
-
         stock = hoja_movimientos.cell(
             row=fila,
             column=7
         ).value
-
 
         print(
             f"{fecha} | "
@@ -938,17 +1420,7 @@ def mostrar_movimientos():
             f"Stock: {stock}"
         )
 
-
     print()
-
-
-# ============================================================
-# GUARDAR CAMBIOS INICIALES
-# ============================================================
-
-libro.save(
-    archivo_excel
-)
 
 
 # ============================================================
@@ -958,7 +1430,6 @@ libro.save(
 while True:
 
     print()
-
     print(
         "=========================================="
     )
@@ -999,11 +1470,9 @@ while True:
 
     print()
 
-
     opcion = input(
         "Seleccione una opción: "
     ).strip()
-
 
     # ========================================================
     # ENTRADA
@@ -1017,18 +1486,15 @@ while True:
             "Código del producto: "
         ).strip()
 
-
         cantidad = input(
             "Cantidad que ingresa: "
         ).strip()
-
 
         registrar_movimiento(
             codigo,
             "ENTRADA",
             cantidad
         )
-
 
     # ========================================================
     # SALIDA
@@ -1042,11 +1508,9 @@ while True:
             "Código del producto: "
         ).strip()
 
-
         cantidad = input(
             "Cantidad que sale: "
         ).strip()
-
 
         registrar_movimiento(
             codigo,
@@ -1054,9 +1518,8 @@ while True:
             cantidad
         )
 
-
     # ========================================================
-    # BUSCAR
+    # BUSCAR PRODUCTO
     # ========================================================
 
     elif opcion == "3":
@@ -1065,11 +1528,9 @@ while True:
             "Código del producto: "
         ).strip()
 
-
         mostrar_producto(
             codigo
         )
-
 
     # ========================================================
     # STOCK BAJO
@@ -1079,7 +1540,6 @@ while True:
 
         mostrar_stock_bajo()
 
-
     # ========================================================
     # MOVIMIENTOS
     # ========================================================
@@ -1088,7 +1548,6 @@ while True:
 
         mostrar_movimientos()
 
-
     # ========================================================
     # SALIR
     # ========================================================
@@ -1096,18 +1555,27 @@ while True:
     elif opcion == "6":
 
         print()
-
         print(
             "Sistema cerrado."
         )
 
+        try:
+
+            libro.close()
+
+        except Exception:
+
+            pass
+
         break
 
+    # ========================================================
+    # OPCIÓN INCORRECTA
+    # ========================================================
 
     else:
 
         print()
-
         print(
             "Opción no válida."
         )

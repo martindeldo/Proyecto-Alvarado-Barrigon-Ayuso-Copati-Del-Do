@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Movimientos</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/gestion.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+
+<header>
+
+    <div>
+
+        <h1>📋 Movimientos</h1>
+
+        <p>
+            Historial de entradas y salidas
+        </p>
+
+    </div>
+
+
+    <div class="usuario">
+
+        👤 {{ session["usuario"] }}
+
+        <a href="{{ url_for('logout') }}">
+            Cerrar sesión
+        </a>
+
+    </div>
+
+</header>
+
+
+<main>
+
+
+<section class="panel">
+
+
+    <div class="panel-header">
+
+        <h2>
+            Historial
+        </h2>
+
+    </div>
+
+
+    <div class="tabla-contenedor">
+
+
+        <table>
+
+
+            <thead>
+
+                <tr>
+
+                    <th>Fecha</th>
+
+                    <th>Código</th>
+
+                    <th>Producto</th>
+
+                    <th>Operación</th>
+
+                    <th>Cantidad</th>
+
+                    <th>Stock anterior</th>
+
+                    <th>Stock resultante</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for movimiento in movimientos %}
+
+
+                <tr>
+
+                    <td>
+                        {{ movimiento.fecha }}
+                    </td>
+
+                    <td>
+                        {{ movimiento.codigo }}
+                    </td>
+
+                    <td>
+                        {{ movimiento.producto }}
+                    </td>
+
+                    <td>
+
+                        {% if movimiento.operacion == "ENTRADA" %}
+
+                            <span class="estado disponible">
+                                ➕ ENTRADA
+                            </span>
+
+                        {% else %}
+
+                            <span class="estado bajo">
+                                ➖ SALIDA
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+                        {{ movimiento.cantidad }}
+                    </td>
+
+                    <td>
+                        {{ movimiento.stock_anterior }}
+                    </td>
+
+                    <td>
+                        {{ movimiento.stock_resultante }}
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+
+                <tr>
+
+                    <td
+                        colspan="7"
+                        class="sin-productos"
+                    >
+
+                        Todavía no hay movimientos.
+
+                    </td>
+
+                </tr>
+
+
+                {% endfor %}
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+</section>
+
+
+<a
+    href="{{ url_for('gestion') }}"
+    class="volver"
+>
+
+    ← Volver a gestión
+
+</a>
+
+
+</main>
+
+
+</body>
+
+</html>

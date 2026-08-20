@@ -26,11 +26,13 @@
 <header>
 
     <div>
+
         <h1>📦 Gestión de Productos</h1>
 
         <p>
             Administración de productos y stock
         </p>
+
     </div>
 
 
@@ -50,92 +52,309 @@
 <main>
 
 
+    <!-- ========================================= -->
+    <!-- ACCIONES -->
+    <!-- ========================================= -->
+
     <section class="acciones">
 
-        <button class="btn agregar">
-            ➕ Agregar producto
+        <button
+            class="btn agregar"
+            onclick="mostrarFormulario('entrada')"
+        >
+            ➕ Entrada
         </button>
 
-        <button class="btn actualizar">
-            🔄 Actualizar stock
+
+        <button
+            class="btn actualizar"
+            onclick="mostrarFormulario('salida')"
+        >
+            ➖ Salida
         </button>
+
+
+        <a
+            href="{{ url_for('stock_bajo') }}"
+            class="btn stock-bajo"
+        >
+            ⚠ Stock bajo
+        </a>
+
+
+        <a
+            href="{{ url_for('movimientos') }}"
+            class="btn movimientos"
+        >
+            📋 Movimientos
+        </a>
 
     </section>
 
 
+    <!-- ========================================= -->
+    <!-- ERROR -->
+    <!-- ========================================= -->
+
+    {% if error %}
+
+    <div class="mensaje-error">
+
+        ❌ {{ error }}
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- ========================================= -->
+    <!-- FORMULARIO -->
+    <!-- ========================================= -->
+
+    <section
+        id="formulario"
+        class="formulario-stock"
+        style="display: none;"
+    >
+
+        <h2 id="titulo-formulario">
+            Movimiento
+        </h2>
+
+
+        <form
+            id="form-stock"
+            method="POST"
+        >
+
+
+            <label>
+                Código del producto
+            </label>
+
+
+            <input
+                id="codigo"
+                type="text"
+                name="codigo"
+                placeholder="Escaneá el código de barras"
+                autocomplete="off"
+                required
+            >
+
+
+            <label>
+                Cantidad
+            </label>
+
+
+            <input
+                id="cantidad"
+                type="number"
+                name="cantidad"
+                min="1"
+                value="1"
+                required
+            >
+
+
+            <div class="formulario-botones">
+
+
+                <button
+                    type="submit"
+                    class="btn confirmar"
+                >
+                    ✓ Confirmar
+                </button>
+
+
+                <button
+                    type="button"
+                    class="btn cancelar"
+                    onclick="cerrarFormulario()"
+                >
+                    Cancelar
+                </button>
+
+
+            </div>
+
+
+        </form>
+
+    </section>
+
+
+    <!-- ========================================= -->
+    <!-- PRODUCTOS -->
+    <!-- ========================================= -->
+
     <section class="panel">
+
 
         <div class="panel-header">
 
-            <h2>Productos</h2>
 
-            <input
-                type="text"
-                placeholder="🔎 Buscar producto..."
-                id="buscar"
+            <h2>
+
+                {% if titulo %}
+
+                    {{ titulo }}
+
+                {% else %}
+
+                    Productos
+
+                {% endif %}
+
+            </h2>
+
+
+            <form
+                action="{{ url_for('buscar') }}"
+                method="GET"
             >
+
+                <input
+                    id="buscador"
+                    type="text"
+                    name="codigo"
+                    placeholder="🔎 Buscar por código..."
+                    value="{{ busqueda or '' }}"
+                    autocomplete="off"
+                >
+
+            </form>
+
 
         </div>
 
 
-        <table>
-
-            <thead>
-
-                <tr>
-
-                    <th>Código</th>
-
-                    <th>Producto</th>
-
-                    <th>Precio</th>
-
-                    <th>Stock</th>
-
-                    <th>Estado</th>
-
-                    <th>Acciones</th>
-
-                </tr>
-
-            </thead>
+        <div class="tabla-contenedor">
 
 
-            <tbody>
+            <table>
 
-                <tr>
 
-                    <td>001</td>
+                <thead>
 
-                    <td>Producto de ejemplo</td>
+                    <tr>
 
-                    <td>$1.500</td>
+                        <th>Código</th>
 
-                    <td>25</td>
+                        <th>Producto</th>
 
-                    <td>
-                        <span class="estado disponible">
-                            Disponible
-                        </span>
-                    </td>
+                        <th>Precio</th>
 
-                    <td>
+                        <th>Stock</th>
 
-                        <button class="editar">
-                            ✏️
-                        </button>
+                        <th>Estado</th>
 
-                        <button class="eliminar">
-                            🗑️
-                        </button>
+                    </tr>
 
-                    </td>
+                </thead>
 
-                </tr>
 
-            </tbody>
+                <tbody>
 
-        </table>
+
+                    {% for producto in productos %}
+
+
+                    <tr>
+
+
+                        <td>
+                            {{ producto.codigo }}
+                        </td>
+
+
+                        <td>
+                            {{ producto.producto }}
+                        </td>
+
+
+                        <td>
+
+                            {% if producto.precio is not none %}
+
+                                ${{ producto.precio }}
+
+                            {% else %}
+
+                                -
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+                            {{ producto.stock }}
+                        </td>
+
+
+                        <td>
+
+
+                            {% if producto.stock <= 5 %}
+
+
+                                <span class="estado bajo">
+
+                                    ⚠ Stock bajo
+
+                                </span>
+
+
+                            {% else %}
+
+
+                                <span class="estado disponible">
+
+                                    ✓ Disponible
+
+                                </span>
+
+
+                            {% endif %}
+
+
+                        </td>
+
+
+                    </tr>
+
+
+                    {% else %}
+
+
+                    <tr>
+
+                        <td
+                            colspan="5"
+                            class="sin-productos"
+                        >
+
+                            No se encontraron productos.
+
+                        </td>
+
+                    </tr>
+
+
+                    {% endfor %}
+
+
+                </tbody>
+
+
+            </table>
+
+
+        </div>
+
 
     </section>
 
@@ -144,10 +363,191 @@
         href="{{ url_for('index') }}"
         class="volver"
     >
+
         ← Volver al inicio
+
     </a>
 
+
 </main>
+
+
+<script>
+
+
+// ============================================================
+// MOSTRAR FORMULARIO
+// ============================================================
+
+function mostrarFormulario(tipo) {
+
+    const formulario =
+        document.getElementById(
+            "formulario"
+        );
+
+
+    const titulo =
+        document.getElementById(
+            "titulo-formulario"
+        );
+
+
+    const form =
+        document.getElementById(
+            "form-stock"
+        );
+
+
+    const codigo =
+        document.getElementById(
+            "codigo"
+        );
+
+
+    formulario.style.display =
+        "block";
+
+
+    if (tipo === "entrada") {
+
+        titulo.textContent =
+            "➕ Entrada de stock";
+
+
+        form.action =
+            "{{ url_for('entrada_stock') }}";
+
+    }
+
+
+    if (tipo === "salida") {
+
+        titulo.textContent =
+            "➖ Salida de stock";
+
+
+        form.action =
+            "{{ url_for('salida_stock') }}";
+
+    }
+
+
+    // Dar automáticamente el foco
+    // al campo del lector
+
+    codigo.focus();
+
+}
+
+
+// ============================================================
+// CERRAR FORMULARIO
+// ============================================================
+
+function cerrarFormulario() {
+
+    document.getElementById(
+        "formulario"
+    ).style.display =
+        "none";
+
+}
+
+
+// ============================================================
+// TECLADO / ESCÁNER HID
+// ============================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const codigo =
+            document.getElementById(
+                "codigo"
+            );
+
+
+        if (codigo) {
+
+            codigo.focus();
+
+        }
+
+    }
+);
+
+
+// ============================================================
+// CUANDO EL ESCÁNER MANDA ENTER
+// ============================================================
+
+document.getElementById(
+    "codigo"
+).addEventListener(
+    "keydown",
+    function (event) {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            event.preventDefault();
+
+            const valor =
+                this.value.trim();
+
+
+            if (
+                valor.length > 0
+            ) {
+
+                // Si estamos dentro
+                // del formulario de stock,
+                // no hacemos nada especial.
+                //
+                // El usuario puede elegir
+                // la cantidad y confirmar.
+
+                document.getElementById(
+                    "cantidad"
+                ).focus();
+
+            }
+
+        }
+
+    }
+);
+
+
+// ============================================================
+// ATAJO: ENTER EN CANTIDAD
+// ============================================================
+
+document.getElementById(
+    "cantidad"
+).addEventListener(
+    "keydown",
+    function (event) {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            event.preventDefault();
+
+            document.getElementById(
+                "form-stock"
+            ).submit();
+
+        }
+
+    }
+);
+
+</script>
 
 
 </body>
