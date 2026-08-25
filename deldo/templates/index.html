@@ -34,14 +34,16 @@
 
     <div class="menu-links">
 
+        <!-- GESTIÓN: primero pasa por LOGIN -->
         <a
             href="{{ url_for('login') }}"
             class="btn-link"
         >
-            🔐 Administrador
+            📦 Gestión de productos
         </a>
 
 
+        <!-- CAJA: entra directamente -->
         <a
             href="{{ url_for('caja') }}"
             class="btn-link"
@@ -49,34 +51,9 @@
             🛒 Caja
         </a>
 
-
-        <a
-            href="{{ url_for('gestion') }}"
-            class="btn-link"
-        >
-            📦 Gestión de productos
-        </a>
-
     </div>
 
-
-    <a
-        href="{{ url_for('gestion') }}"
-        class="boton"
-    >
-        📦 Gestión de productos
-    </a>
-
-
-    <a
-        href="{{ url_for('caja') }}"
-        class="boton"
-    >
-        🛒 Caja
-    </a>
-
 </main>
-
 
 </body>
 

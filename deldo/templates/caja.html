@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="es">
 
 <head>
@@ -8,18 +7,14 @@
 
     <meta
         name="viewport"
-        content="width=device-width,
-                 initial-scale=1.0"
+        content="width=device-width, initial-scale=1.0"
     >
 
     <title>Caja</title>
 
     <link
         rel="stylesheet"
-        href="{{ url_for(
-            'static',
-            filename='css/caja.css'
-        ) }}"
+        href="{{ url_for('static', filename='css/caja.css') }}"
     >
 
 </head>
@@ -36,77 +31,139 @@
 
 <main>
 
+    <!-- ========================================= -->
+    <!-- ESCÁNER -->
+    <!-- ========================================= -->
 
-    <div class="lector">
+    <section class="lector">
 
-        <label>
+        <label for="codigo">
             Escanear código de barras
         </label>
-
 
         <input
             type="text"
             id="codigo"
             placeholder="Escanee un producto..."
+            autocomplete="off"
             autofocus
         >
 
-    </div>
+        <p id="mensaje"></p>
+
+    </section>
 
 
-    <div id="mensaje"></div>
+    <!-- ========================================= -->
+    <!-- PRODUCTO ESCANEADO -->
+    <!-- ========================================= -->
+
+    <section
+        id="producto-escaneado"
+        class="producto-escaneado"
+        style="display: none;"
+    >
+
+        <h2>Producto escaneado</h2>
+
+        <p>
+            <strong>Código:</strong>
+            <span id="codigo-mostrado"></span>
+        </p>
+
+        <p>
+            <strong>Producto:</strong>
+            <span id="nombre-mostrado"></span>
+        </p>
+
+        <p>
+            <strong>Precio:</strong>
+            $<span id="precio-mostrado"></span>
+        </p>
+
+    </section>
 
 
-    <table>
+    <!-- ========================================= -->
+    <!-- CARRITO -->
+    <!-- ========================================= -->
 
-        <thead>
+    <section class="carrito">
 
-            <tr>
+        <h2>🛒 Productos de la compra</h2>
 
-                <th>Producto</th>
+        <table>
 
-                <th>Precio</th>
+            <thead>
 
-                <th>Cantidad</th>
+                <tr>
 
-                <th>Subtotal</th>
+                    <th>Código</th>
 
-                <th></th>
+                    <th>Producto</th>
 
-            </tr>
+                    <th>Precio</th>
 
-        </thead>
+                    <th>Cantidad</th>
+
+                    <th>Subtotal</th>
+
+                    <th></th>
+
+                </tr>
+
+            </thead>
 
 
-        <tbody id="carrito">
+            <tbody id="carrito">
 
-        </tbody>
+            </tbody>
 
-    </table>
+        </table>
+
+    </section>
 
 
-    <div class="total">
+    <!-- ========================================= -->
+    <!-- TOTAL -->
+    <!-- ========================================= -->
 
-        TOTAL:
+    <section class="total">
 
-        $<span id="total">
+        <strong>
+            TOTAL:
+        </strong>
+
+        $
+
+        <span id="total">
             0.00
         </span>
 
-    </div>
+    </section>
 
+
+    <!-- ========================================= -->
+    <!-- FINALIZAR COMPRA -->
+    <!-- ========================================= -->
 
     <button
+        type="button"
         class="boton comprar"
         onclick="finalizarCompra()"
     >
-        💳 Finalizar compra
+        🧾 Finalizar compra e imprimir ticket
     </button>
 
 
-    <a href="/">
-        ← Volver
+    <br>
+    <br>
+
+
+    <a href="{{ url_for('index') }}">
+        ← Volver al inicio
     </a>
+
 
 </main>
 
