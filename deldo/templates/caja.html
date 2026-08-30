@@ -144,7 +144,7 @@
 
 
     <!-- ========================================= -->
-    <!-- FINALIZAR COMPRA -->
+    <!-- ENVIAR RECIBO -->
     <!-- ========================================= -->
 
     <button
@@ -152,8 +152,77 @@
         class="boton comprar"
         onclick="finalizarCompra()"
     >
-        🧾 Finalizar compra e imprimir ticket
+        📧 Enviar recibo por mail
     </button>
+
+
+    <!-- ========================================= -->
+    <!-- FORMULARIO DE CORREO -->
+    <!-- ========================================= -->
+
+    <div
+        id="correo-container"
+        class="correo-container"
+        style="display: none;"
+    >
+
+        <h2>📧 Enviar recibo</h2>
+
+        <p>
+            Ingrese el correo electrónico donde desea recibir el recibo.
+        </p>
+
+        <input
+            type="email"
+            id="correo"
+            placeholder="ejemplo@correo.com"
+            autocomplete="email"
+        >
+
+        <div class="correo-botones">
+
+            <button
+                type="button"
+                onclick="enviarRecibo()"
+            >
+                ✓ Confirmar
+            </button>
+
+            <button
+                type="button"
+                onclick="cancelarCorreo()"
+            >
+                Cancelar
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================= -->
+    <!-- COMPRA EXITOSA -->
+    <!-- ========================================= -->
+
+    <div
+        id="compra-exitosa"
+        class="compra-exitosa"
+        style="display: none;"
+    >
+
+        <div class="check-verde">
+            ✓
+        </div>
+
+        <h2>
+            Compra finalizada con éxito
+        </h2>
+
+        <p>
+            El recibo fue enviado correctamente.
+        </p>
+
+    </div>
 
 
     <br>

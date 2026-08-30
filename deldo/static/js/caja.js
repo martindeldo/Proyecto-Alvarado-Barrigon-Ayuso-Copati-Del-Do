@@ -1,3 +1,4 @@
+
 const inputCodigo =
     document.getElementById("codigo");
 
@@ -5,31 +6,53 @@ const carrito = {};
 
 
 // ==========================================
-// DETECTAR EL LECTOR
+// DETECTAR 12 DÍGITOS AUTOMÁTICAMENTE
 // ==========================================
 
 inputCodigo.addEventListener(
-    "keydown",
-    function(event) {
+    "input",
+    function() {
 
-        if (event.key !== "Enter") {
-            return;
-        }
-
-
-        const codigo =
+        let codigo =
             inputCodigo.value.trim();
 
 
-        if (codigo === "") {
-            return;
+        // ==========================================
+        // SOLO PERMITIR NÚMEROS
+        // ==========================================
+
+        if (!/^\d*$/.test(codigo)) {
+
+            codigo =
+                codigo.replace(/\D/g, "");
+
+            inputCodigo.value =
+                codigo;
+
         }
 
 
-        inputCodigo.value = "";
+        // ==========================================
+        // CUANDO HAYA EXACTAMENTE 12 NÚMEROS
+        // ==========================================
+
+        if (codigo.length === 12) {
+
+            // Guardar el código
+            const codigoEscaneado =
+                codigo;
 
 
-        buscarProducto(codigo);
+            // Limpiar el campo
+            inputCodigo.value = "";
+
+
+            // Buscar automáticamente
+            buscarProducto(
+                codigoEscaneado
+            );
+
+        }
 
     }
 );
@@ -39,18 +62,25 @@ inputCodigo.addEventListener(
 // BUSCAR PRODUCTO
 // ==========================================
 
-async function buscarProducto(codigo) {
+async function buscarProducto(
+    codigo
+) {
 
     try {
 
-        const respuesta = await fetch(
-            `/api/producto/${codigo}`
-        );
+        const respuesta =
+            await fetch(
+                `/api/producto/${codigo}`
+            );
 
 
         const producto =
             await respuesta.json();
 
+
+        // ==========================================
+        // PRODUCTO NO ENCONTRADO
+        // ==========================================
 
         if (!respuesta.ok) {
 
@@ -59,11 +89,21 @@ async function buscarProducto(codigo) {
                 "error"
             );
 
+
+            inputCodigo.focus();
+
+
             return;
         }
 
 
-        agregarProducto(producto);
+        // ==========================================
+        // AGREGAR PRODUCTO
+        // ==========================================
+
+        agregarProducto(
+            producto
+        );
 
 
         mostrarMensaje(
@@ -72,9 +112,14 @@ async function buscarProducto(codigo) {
         );
 
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
-        console.error(error);
+        console.error(
+            error
+        );
+
 
         mostrarMensaje(
             "❌ Error de conexión",
@@ -83,6 +128,11 @@ async function buscarProducto(codigo) {
 
     }
 
+
+    // Volver a enfocar el lector
+
+    inputCodigo.focus();
+
 }
 
 
@@ -90,17 +140,32 @@ async function buscarProducto(codigo) {
 // AGREGAR AL CARRITO
 // ==========================================
 
-function agregarProducto(producto) {
+function agregarProducto(
+    producto
+) {
 
     const codigo =
         producto.codigo;
 
 
-    if (carrito[codigo]) {
+    // ==========================================
+    // SI YA ESTÁ EN EL CARRITO
+    // ==========================================
+
+    if (
+        carrito[codigo]
+    ) {
 
         carrito[codigo].cantidad++;
 
-    } else {
+    }
+
+
+    // ==========================================
+    // SI ES UN PRODUCTO NUEVO
+    // ==========================================
+
+    else {
 
         carrito[codigo] = {
 
@@ -111,9 +176,12 @@ function agregarProducto(producto) {
                 producto.nombre,
 
             precio:
-                Number(producto.precio),
+                Number(
+                    producto.precio
+                ),
 
-            cantidad: 1
+            cantidad:
+                1
 
         };
 
@@ -143,6 +211,10 @@ function actualizarCarrito() {
     let total = 0;
 
 
+    // ==========================================
+    // RECORRER PRODUCTOS
+    // ==========================================
+
     for (
         const codigo in carrito
     ) {
@@ -156,11 +228,14 @@ function actualizarCarrito() {
             producto.cantidad;
 
 
-        total += subtotal;
+        total +=
+            subtotal;
 
 
         const fila =
-            document.createElement("tr");
+            document.createElement(
+                "tr"
+            );
 
 
         fila.innerHTML = `
@@ -184,6 +259,7 @@ function actualizarCarrito() {
             <td>
 
                 <button
+                    type="button"
                     onclick="
                         eliminarDelCarrito(
                             '${codigo}'
@@ -198,10 +274,16 @@ function actualizarCarrito() {
         `;
 
 
-        tabla.appendChild(fila);
+        tabla.appendChild(
+            fila
+        );
 
     }
 
+
+    // ==========================================
+    // MOSTRAR TOTAL
+    // ==========================================
 
     document.getElementById(
         "total"
@@ -215,11 +297,19 @@ function actualizarCarrito() {
 // ELIMINAR DEL CARRITO
 // ==========================================
 
-function eliminarDelCarrito(codigo) {
+function eliminarDelCarrito(
+    codigo
+) {
 
-    delete carrito[codigo];
+    delete carrito[
+        codigo
+    ];
+
 
     actualizarCarrito();
+
+
+    inputCodigo.focus();
 
 }
 
@@ -231,14 +321,59 @@ function eliminarDelCarrito(codigo) {
 async function finalizarCompra() {
 
     const productos =
-        Object.values(carrito);
-
-
-    if (productos.length === 0) {
-
-        alert(
-            "El carrito está vacío"
+        Object.values(
+            carrito
         );
+
+
+    // ==========================================
+    // COMPROBAR CARRITO VACÍO
+    // ==========================================
+
+    if (
+        productos.length === 0
+    ) {
+
+        mostrarMensaje(
+            "⚠️ El carrito está vacío. Agregá al menos un producto.",
+            "error"
+        );
+
+
+        inputCodigo.focus();
+
+
+        return;
+    }
+
+
+    // ==========================================
+    // PEDIR CORREO
+    // ==========================================
+
+    const correo =
+        prompt(
+            "Ingrese el correo electrónico para enviar el recibo:"
+        );
+
+
+    // ==========================================
+    // COMPROBAR CORREO
+    // ==========================================
+
+    if (
+        correo === null ||
+        correo.trim() === ""
+    ) {
+
+        mostrarMensaje(
+            "⚠️ Debés ingresar un correo electrónico.",
+            "error"
+        );
+
+
+        inputCodigo.focus();
+
 
         return;
     }
@@ -251,17 +386,26 @@ async function finalizarCompra() {
                 "/api/venta",
                 {
 
-                    method: "POST",
+                    method:
+                        "POST",
 
                     headers: {
+
                         "Content-Type":
                             "application/json"
+
                     },
 
-                    body: JSON.stringify({
-                        productos:
-                            productos
-                    })
+                    body:
+                        JSON.stringify({
+
+                            productos:
+                                productos,
+
+                            correo:
+                                correo.trim()
+
+                        })
 
                 }
             );
@@ -271,28 +415,48 @@ async function finalizarCompra() {
             await respuesta.json();
 
 
-        if (!respuesta.ok) {
+        // ==========================================
+        // ERROR
+        // ==========================================
 
-            alert(
-                resultado.error
+        if (
+            !respuesta.ok
+        ) {
+
+            mostrarMensaje(
+                `❌ ${resultado.error}`,
+                "error"
             );
+
+
+            inputCodigo.focus();
+
 
             return;
         }
 
 
-        alert(
-            "Compra realizada correctamente"
+        // ==========================================
+        // COMPRA FINALIZADA
+        // ==========================================
+
+        mostrarMensaje(
+            "✅ ¡Compra finalizada con éxito!",
+            "ok"
         );
 
 
-        // Vaciar carrito
+        // ==========================================
+        // VACIAR CARRITO
+        // ==========================================
 
         for (
             const codigo in carrito
         ) {
 
-            delete carrito[codigo];
+            delete carrito[
+                codigo
+            ];
 
         }
 
@@ -300,18 +464,29 @@ async function finalizarCompra() {
         actualizarCarrito();
 
 
-        // Volver a enfocar lector
+        // ==========================================
+        // VOLVER AL ESCÁNER
+        // ==========================================
 
         inputCodigo.focus();
 
 
-    } catch (error) {
+    } catch (
+        error
+    ) {
 
-        console.error(error);
-
-        alert(
-            "Error al finalizar la compra"
+        console.error(
+            error
         );
+
+
+        mostrarMensaje(
+            "❌ Error al finalizar la compra",
+            "error"
+        );
+
+
+        inputCodigo.focus();
 
     }
 
@@ -319,7 +494,7 @@ async function finalizarCompra() {
 
 
 // ==========================================
-// MENSAJES
+// MOSTRAR MENSAJES
 // ==========================================
 
 function mostrarMensaje(
