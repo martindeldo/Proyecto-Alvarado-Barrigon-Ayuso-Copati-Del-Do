@@ -1,12 +1,14 @@
 # Proyecto-Alvaredo-Barrigon-Ayuso-Copati-Del-Do
 
-# 🛒 Sistema de Gestión de Stock
+# 🛒 Sistema de Gestión de Stock y Caja
 
-Sistema de gestión de productos y stock desarrollado con **Python, Excel, Flask y Raspberry Pi**.
+Sistema de gestión de productos, stock y caja registradora desarrollado con **Python, Excel, Flask y Raspberry Pi**.
 
-El proyecto permite administrar productos, controlar entradas y salidas de stock, consultar productos, detectar productos con poco stock y registrar los movimientos realizados.
+El proyecto permite administrar productos, controlar entradas y salidas de stock, consultar productos, detectar productos con poco stock, registrar los movimientos realizados y realizar ventas mediante un sistema de caja.
 
-Además, el sistema puede utilizar un **lector de códigos de barras** conectado por USB para buscar productos de forma rápida.
+Además, el sistema puede utilizar un **lector de códigos de barras conectado por USB** para identificar productos rápidamente.
+
+La información del sistema se almacena en un archivo de **Excel**, mientras que Flask permite utilizar las diferentes funciones desde una página web.
 
 ---
 
@@ -29,16 +31,33 @@ Además, el sistema puede utilizar un **lector de códigos de barras** conectado
 * [Lector de códigos de barras](#-12-conectar-el-lector-de-códigos-de-barras)
 * [FileZilla](#-13-usar-filezilla)
 * [VNC Viewer](#-14-usar-vnc-viewer)
-* [¿Cómo se conectan Python, Excel y Flask?](#-15-cómo-funciona-python-excel-y-flask-juntos)
-* [Flujo completo del sistema](#-16-flujo-completo-del-sistema)
-* [Problemas frecuentes](#-17-problemas-frecuentes)
-* [Resumen](#-18-resumen)
+* [Sistema de Caja](#-15-sistema-de-caja)
+* [¿Cómo funciona la Caja?](#-16-cómo-funciona-la-caja)
+* [Lector de códigos en Caja](#-17-lector-de-códigos-en-caja)
+* [Buscar un producto](#-18-buscar-un-producto)
+* [Carrito de compras](#-19-carrito-de-compras)
+* [Cantidad de productos](#-20-cantidad-de-productos)
+* [Cálculo del total](#-21-cálculo-del-total)
+* [Eliminar productos del carrito](#-22-eliminar-productos-del-carrito)
+* [Finalizar una compra](#-23-finalizar-una-compra)
+* [Descuento automático del stock](#-24-descuento-automático-del-stock)
+* [Registro de la venta](#-25-registro-de-la-venta)
+* [Backup del Excel](#-26-backup-del-excel)
+* [API de la Caja](#-27-api-de-la-caja)
+* [JavaScript de la Caja](#-28-javascript-de-la-caja)
+* [Flask y la Caja](#-29-flask-y-la-caja)
+* [Diferencia entre Gestión y Caja](#-30-diferencia-entre-gestión-y-caja)
+* [Flujo completo de una venta](#-31-flujo-completo-de-una-venta)
+* [¿Cómo se conectan Python, Excel y Flask?](#-32-cómo-se-conectan-python-excel-y-flask)
+* [Flujo completo del sistema](#-33-flujo-completo-del-sistema)
+* [Problemas frecuentes](#-34-problemas-frecuentes)
+* [Resumen](#-35-resumen)
 
 ---
 
 # 📌 ¿Qué hace este proyecto?
 
-Este proyecto fue creado para administrar el stock de productos de manera sencilla.
+Este proyecto fue creado para administrar el stock de productos y realizar ventas de manera sencilla.
 
 En lugar de tener que controlar todo manualmente, el programa permite:
 
@@ -51,6 +70,12 @@ En lugar de tener que controlar todo manualmente, el programa permite:
 * Utilizar códigos de barras.
 * Guardar toda la información en un archivo de Excel.
 * Acceder al sistema desde una página web.
+* Utilizar una caja registradora.
+* Agregar productos a un carrito.
+* Calcular automáticamente el total de una compra.
+* Descontar productos vendidos del stock.
+* Registrar las ventas como movimientos de salida.
+* Crear backups del archivo Excel.
 * Ejecutar el sistema en una Raspberry Pi.
 
 El objetivo es que una persona pueda descargar el proyecto, instalar lo necesario y ponerlo a funcionar sin tener conocimientos avanzados de programación.
@@ -93,7 +118,7 @@ Si queremos utilizar el sistema completo con Raspberry Pi y lector de códigos d
 * Raspberry Pi 3 Model B.
 * Fuente de alimentación compatible con la Raspberry Pi.
 * Tarjeta microSD.
-* Lector de códigos de barras **Metrologic MS7120**.
+* Lector de códigos de barras USB.
 * Cable USB para conectar el lector.
 * Monitor, teclado y mouse para la configuración inicial de la Raspberry Pi, si no vamos a configurarla de forma remota.
 * Cable de red Ethernet o conexión Wi-Fi.
@@ -105,7 +130,7 @@ Si queremos utilizar el sistema completo con Raspberry Pi y lector de códigos d
 
 Antes de instalar nada, es importante entender la idea general.
 
-El sistema tiene tres partes principales:
+El sistema tiene varias partes que trabajan juntas:
 
 ```text
                  ┌───────────────┐
@@ -118,26 +143,37 @@ El sistema tiene tres partes principales:
                  │  Página web   │
                  └───────┬───────┘
                          │
+             ┌───────────┴───────────┐
+             │                       │
+             ▼                       ▼
+       ┌─────────────┐        ┌─────────────┐
+       │   GESTIÓN   │        │    CAJA     │
+       │   DE STOCK  │        │  REGISTROS  │
+       └──────┬──────┘        └──────┬──────┘
+              │                      │
+              └──────────┬───────────┘
                          ▼
-                 ┌───────────────┐
-                 │    PYTHON     │
-                 │ Lógica del    │
-                 │    sistema    │
-                 └───────┬───────┘
+                  ┌─────────────┐
+                  │   PYTHON    │
+                  │  stock.py   │
+                  └──────┬──────┘
                          │
                          ▼
-                 ┌───────────────┐
-                 │     EXCEL     │
-                 │ Información   │
-                 │    del stock  │
-                 └───────────────┘
+                  ┌─────────────┐
+                  │    EXCEL    │
+                  │   STOCK     │
+                  └─────────────┘
 ```
 
 En palabras simples:
 
 **Flask muestra la página.**
 
-**Python hace el trabajo.**
+**JavaScript controla las acciones de la Caja.**
+
+**Python realiza las operaciones.**
+
+**`stock.py` se encarga de trabajar con el stock.**
 
 **Excel guarda la información.**
 
@@ -251,8 +287,6 @@ La palabra:
 ```
 
 indica que el entorno está activado.
-
-Flask recomienda este método para mantener separadas las librerías de cada proyecto.
 
 ---
 
@@ -371,6 +405,8 @@ Gracias a Flask podemos tener una página desde la cual:
 * Registrar entradas.
 * Registrar salidas.
 * Consultar movimientos.
+* Acceder a la Caja.
+* Realizar ventas.
 * Utilizar el sistema desde un navegador.
 
 ---
@@ -391,8 +427,6 @@ pip show Flask
 
 Si aparece información sobre Flask, la instalación funcionó.
 
-Flask actualmente requiere Python 3.9 o una versión posterior.
-
 ---
 
 # 📝 7. Instalar Visual Studio Code
@@ -409,7 +443,7 @@ Es un programa que nos permite abrir y modificar los archivos del proyecto de ma
 
 Podemos descargarlo desde la página oficial:
 
-[Descargar Visual Studio Code](https://code.visualstudio.com/download?utm_source=chatgpt.com)
+https://code.visualstudio.com/
 
 En Ubuntu podemos descargar el archivo `.deb`.
 
@@ -426,8 +460,6 @@ Luego:
 ```bash
 sudo apt install ./code_*.deb
 ```
-
-La documentación oficial de Visual Studio Code recomienda el paquete `.deb` para Ubuntu y otras distribuciones basadas en Debian.
 
 ---
 
@@ -460,20 +492,28 @@ La estructura puede ser similar a:
 ```text
 Proyecto/
 │
-├── excel/
-│   └── productos_corregido.xlsx
+├── backups/
 │
 ├── static/
 │   ├── css/
-│   ├── imagenes/
-│   └── ...
+│   │   ├── caja.css
+│   │   ├── gestion.css
+│   │   └── index.css
+│   │
+│   ├── js/
+│   │   └── caja.js
+│   │
+│   └── imagenes/
 │
 ├── templates/
+│   ├── index.html
+│   ├── login.html
 │   ├── gestion.html
-│   └── ...
+│   ├── caja.html
+│   └── movimientos.html
 │
+├── productos_corregido.xlsx
 ├── stock.py
-├── barritas.py
 ├── app.py
 │
 └── .venv/
@@ -501,43 +541,41 @@ Activamos el entorno:
 source .venv/bin/activate
 ```
 
-Después ejecutamos el programa correspondiente.
-
-Por ejemplo:
-
-```bash
-python3 stock.py
-```
-
-Si utilizamos Flask, normalmente ejecutaremos el archivo principal de Flask.
-
-Por ejemplo:
+Después ejecutamos Flask:
 
 ```bash
 python3 app.py
 ```
 
-El comando exacto dependerá del archivo principal incluido en el proyecto.
+Si Flask está correctamente configurado, aparecerá un mensaje indicando que el servidor está funcionando.
 
 ---
 
 # 🌐 Entrar a la página
 
-Cuando Flask está funcionando, normalmente aparece una dirección parecida a:
+Cuando Flask está funcionando, normalmente podemos acceder desde:
 
 ```text
-http://127.0.0.1:5000
+http://127.0.0.1:4000
 ```
 
-Podemos copiar esa dirección y abrirla en el navegador.
-
-También puede aparecer una dirección de red, por ejemplo:
+En este proyecto Flask utiliza el puerto:
 
 ```text
-http://192.168.1.100:5000
+4000
 ```
 
-Esta segunda dirección puede permitir que otros dispositivos de la misma red accedan al sistema, dependiendo de cómo esté configurado Flask.
+Podemos copiar la dirección y abrirla en el navegador.
+
+Si estamos utilizando la Raspberry Pi desde otro dispositivo de la misma red, podemos utilizar la dirección IP de la Raspberry.
+
+Por ejemplo:
+
+```text
+http://192.168.1.100:4000
+```
+
+La dirección será diferente en cada red.
 
 ---
 
@@ -569,7 +607,7 @@ La página oficial de Raspberry Pi ofrece Raspberry Pi OS y Raspberry Pi Imager.
 
 Podemos descargarlo desde:
 
-[Raspberry Pi — Software oficial](https://www.raspberrypi.com/software/?utm_source=chatgpt.com)
+https://www.raspberrypi.com/software/
 
 ---
 
@@ -603,8 +641,6 @@ Seleccionamos:
 Raspberry Pi OS
 ```
 
-Para la Raspberry Pi 3 también existen versiones de 32 y 64 bits; la página oficial indica específicamente la compatibilidad de Raspberry Pi 3 con Raspberry Pi OS.
-
 ---
 
 ## Paso 5 — Elegir la microSD
@@ -629,64 +665,49 @@ Cuando termine, retiramos la tarjeta de forma segura.
 
 ---
 
-# 🔌 12. Conectar la Raspberry Pi
+# 🔌 12. Conectar el lector de códigos de barras
 
-Colocamos la microSD en la Raspberry Pi.
+El lector de códigos de barras se conecta mediante USB.
 
-Después conectamos:
-
-```text
-                 ┌───────────────────┐
-                 │   Raspberry Pi 3  │
-                 │                   │
-                 │     microSD       │
-                 │        ↓          │
-                 │   Sistema         │
-                 │                   │
-                 └─────────┬─────────┘
-                           │
-                           ▼
-                       Internet
-```
-
-La Raspberry necesita alimentación eléctrica.
-
-Podemos conectarla mediante su puerto de alimentación correspondiente.
-
----
-
-# 📡 Conectar a Internet
-
-La Raspberry Pi puede conectarse mediante:
-
-* Wi-Fi.
-* Cable de red Ethernet.
-
-Para este proyecto recomendamos utilizar una conexión estable.
-
-Si vamos a acceder a la Raspberry desde otra computadora, necesitamos saber su dirección dentro de la red.
-
-Por ejemplo:
+La idea es:
 
 ```text
-192.168.1.100
+Código de barras
+       ↓
+Lector USB
+       ↓
+Raspberry Pi
+       ↓
+Sistema de Caja
 ```
 
-La dirección será diferente en cada red.
+La mayoría de lectores USB funcionan como un dispositivo HID.
+
+Esto significa que el lector envía los números como si fueran escritos mediante un teclado.
+
+Por ejemplo, si el código es:
+
+```text
+100000000067
+```
+
+el lector envía:
+
+```text
+100000000067
+```
+
+y normalmente termina enviando un:
+
+```text
+ENTER
+```
+
+Esto permite que JavaScript detecte automáticamente que terminó el escaneo.
 
 ---
 
-# 📦 13. Pasar el proyecto a la Raspberry
-
-Una vez que tenemos la Raspberry funcionando, necesitamos copiar nuestro proyecto desde la computadora hacia ella.
-
-Una opción sencilla es utilizar:
-
-**FileZilla**
-
----
-
-# 📁 ¿Qué es FileZilla?
+# 📦 13. Usar FileZilla
 
 FileZilla es un programa que permite mover archivos entre dos computadoras.
 
@@ -705,75 +726,14 @@ Podemos utilizarlo para copiar:
 * Archivos Python.
 * Archivos HTML.
 * Archivos CSS.
+* JavaScript.
 * Imágenes.
 * Archivos de Excel.
 * Otros archivos del proyecto.
 
 ---
 
-# 📥 Instalar FileZilla
-
-Podemos descargar FileZilla desde su página oficial:
-
-[FileZilla](https://filezilla-project.org/?utm_source=chatgpt.com)
-
-Buscamos **FileZilla Client**.
-
----
-
-# 🔐 Conectar FileZilla con la Raspberry
-
-La forma recomendada es utilizar una conexión segura mediante SSH/SFTP.
-
-En FileZilla tendremos que indicar los datos de nuestra Raspberry.
-
-Normalmente necesitaremos:
-
-```text
-Servidor: dirección de la Raspberry
-Usuario: usuario de la Raspberry
-Contraseña: contraseña de la Raspberry
-Puerto: 22
-```
-
-Por ejemplo:
-
-```text
-Servidor: 192.168.1.100
-Usuario: usuario
-Contraseña: ********
-Puerto: 22
-```
-
-El usuario, contraseña y dirección dependen de la configuración que hayamos elegido.
-
----
-
-# 📂 ¿Cómo se utiliza?
-
-FileZilla normalmente muestra dos lados:
-
-```text
-┌──────────────────────┬──────────────────────┐
-│   NUESTRA PC         │    RASPBERRY PI      │
-│                      │                      │
-│ Proyecto             │ home                 │
-│ stock.py             │ Proyecto             │
-│ app.py               │ stock.py             │
-│ productos.xlsx       │ app.py               │
-│                      │ productos.xlsx       │
-└──────────────────────┴──────────────────────┘
-```
-
-Podemos arrastrar archivos de un lado hacia el otro.
-
-Así podemos copiar nuestro proyecto a la Raspberry.
-
----
-
 # 🖥️ 14. Usar VNC Viewer
-
-Otra herramienta muy útil es **VNC Viewer**.
 
 VNC permite ver y controlar la pantalla de otra computadora desde nuestro propio equipo.
 
@@ -787,47 +747,867 @@ Nuestra computadora
  Raspberry Pi
 ```
 
-Esto significa que podemos controlar la Raspberry Pi como si estuviéramos sentados frente a ella.
+Esto significa que podemos controlar la Raspberry Pi como si estuviéramos frente a ella.
 
 ---
 
-# 📥 Descargar VNC Viewer
+# 🛒 15. Sistema de Caja
 
-Podemos descargarlo desde la página oficial de RealVNC:
+El sistema de Caja permite realizar una venta utilizando el lector de códigos de barras.
 
-[Descargar RealVNC Viewer](https://www.realvnc.com/es/connect/download/viewer/?utm_source=chatgpt.com)
+A diferencia de la sección de Gestión, donde administramos el stock, la Caja está pensada para el momento en el que un cliente realiza una compra.
 
-RealVNC ofrece versiones para diferentes sistemas operativos y también herramientas para Raspberry Pi.
-
----
-
-# ⚠️ Importante sobre VNC
-
-Para poder controlar una Raspberry mediante VNC necesitamos tener configurado el acceso remoto en la Raspberry.
-
-Actualmente RealVNC también ofrece **RealVNC Connect**, que combina las herramientas necesarias para establecer este tipo de conexión.
-
-La idea general es:
+El funcionamiento general es:
 
 ```text
-Raspberry Pi
-     │
-     │ VNC Server
-     │
-     ▼
-   Internet
-     │
-     ▼
-Nuestra PC
-     │
-     │ VNC Viewer
-     ▼
-Pantalla de Raspberry
+             🛒 CAJA
+                │
+                ▼
+       Escanear producto
+                │
+                ▼
+       Buscar en Excel
+                │
+                ▼
+        Mostrar producto
+                │
+                ▼
+       Agregar al carrito
+                │
+                ▼
+        Calcular subtotal
+                │
+                ▼
+          Calcular total
+                │
+                ▼
+       Finalizar la compra
+                │
+                ▼
+       Descontar el stock
+                │
+                ▼
+      Registrar movimiento
+                │
+                ▼
+              EXCEL
 ```
 
 ---
 
-# 📊 15. ¿Cómo funciona Python, Excel y Flask juntos?
+# 🏪 ¿Cómo entrar a Caja?
+
+Desde la página principal encontramos dos opciones:
+
+```text
+📦 Gestión de productos
+
+🛒 Caja
+```
+
+La opción:
+
+```text
+📦 Gestión de productos
+```
+
+requiere iniciar sesión como administrador.
+
+La opción:
+
+```text
+🛒 Caja
+```
+
+puede entrar directamente a la sección de Caja.
+
+Esto permite separar las tareas administrativas de las tareas de venta.
+
+---
+
+# 🔐 Diferencia entre administrador y Caja
+
+El sistema utiliza una sesión para proteger las funciones administrativas.
+
+La Gestión de productos necesita que el usuario esté autenticado.
+
+Por ejemplo:
+
+```text
+Página principal
+       │
+       ├───────────────┐
+       │               │
+       ▼               ▼
+   Gestión            Caja
+       │               │
+       ▼               ▼
+    Login          caja.html
+       │
+       ▼
+   Gestión de
+    productos
+```
+
+De esta manera:
+
+**Gestión = administración del sistema.**
+
+**Caja = realización de ventas.**
+
+---
+
+# 🔎 16. ¿Cómo funciona la Caja?
+
+La página de Caja contiene un campo donde se coloca el código del producto.
+
+Por ejemplo:
+
+```text
+┌─────────────────────────────────┐
+│ Escanear código de barras       │
+│                                 │
+│ [ 100000000067              ]   │
+└─────────────────────────────────┘
+```
+
+El lector introduce automáticamente el código.
+
+JavaScript detecta el código y realiza una solicitud a Flask.
+
+El recorrido es:
+
+```text
+Lector
+   ↓
+caja.js
+   ↓
+/api/producto/<codigo>
+   ↓
+Flask
+   ↓
+stock.py
+   ↓
+Excel
+```
+
+---
+
+# 🏷️ 17. Lector de códigos en Caja
+
+Cuando el lector escanea un producto, envía el código al campo correspondiente.
+
+Por ejemplo:
+
+```text
+100000000067
+```
+
+El JavaScript espera el:
+
+```text
+ENTER
+```
+
+Cuando lo recibe, toma el código y busca el producto.
+
+La función utilizada es:
+
+```javascript
+buscarProducto(codigo);
+```
+
+El sistema no necesita que el usuario escriba manualmente el código.
+
+Esto hace que el proceso de venta sea mucho más rápido.
+
+---
+
+# 🔎 18. Buscar un producto
+
+Cuando se escanea un código, `caja.js` realiza una solicitud:
+
+```javascript
+fetch(`/api/producto/${codigo}`)
+```
+
+Por ejemplo:
+
+```text
+/api/producto/100000000067
+```
+
+Flask recibe esa solicitud.
+
+Después utiliza:
+
+```python
+stock.buscar_producto(codigo)
+```
+
+para buscar el producto en Excel.
+
+Si encuentra el producto, devuelve información como:
+
+```text
+Código
+Nombre
+Precio
+Stock
+```
+
+Por ejemplo:
+
+```text
+Código: 100000000067
+Producto: Salsa Golf
+Precio: $1500
+Stock: 20
+```
+
+---
+
+# ❌ Producto no encontrado
+
+Si el código no existe en Excel, la Caja muestra:
+
+```text
+❌ Producto no encontrado
+```
+
+Esto evita agregar al carrito un producto que no está registrado.
+
+---
+
+# 🛍️ 19. Carrito de compras
+
+Cada producto escaneado se agrega a un carrito.
+
+El carrito se mantiene en JavaScript.
+
+Por ejemplo:
+
+```text
+┌───────────────────────────────────────────────────────┐
+│ Código       Producto      Precio   Cant.   Subtotal │
+├───────────────────────────────────────────────────────┤
+│ 100000000067 Salsa Golf   $1500      2       $3000   │
+│ 100000000002 Pizza        $2000      1       $2000   │
+└───────────────────────────────────────────────────────┘
+```
+
+El carrito permite acumular varios productos antes de finalizar la venta.
+
+---
+
+# 🔢 20. Cantidad de productos
+
+Si escaneamos el mismo producto más de una vez, el sistema aumenta automáticamente la cantidad.
+
+Por ejemplo:
+
+Primer escaneo:
+
+```text
+Salsa Golf
+Cantidad: 1
+```
+
+Segundo escaneo:
+
+```text
+Salsa Golf
+Cantidad: 2
+```
+
+Tercer escaneo:
+
+```text
+Salsa Golf
+Cantidad: 3
+```
+
+El producto no se agrega como tres filas diferentes.
+
+Se mantiene como un único producto con cantidad:
+
+```text
+Salsa Golf
+Cantidad: 3
+```
+
+---
+
+# 💰 21. Cálculo del total
+
+Cada producto tiene:
+
+```text
+Precio × Cantidad = Subtotal
+```
+
+Por ejemplo:
+
+```text
+Salsa Golf
+$1500 × 2 = $3000
+```
+
+Si tenemos:
+
+```text
+Salsa Golf       $3000
+Pizza            $2000
+Gaseosa          $1500
+```
+
+el sistema calcula:
+
+```text
+TOTAL = $6500
+```
+
+El total se actualiza automáticamente cada vez que agregamos o eliminamos un producto.
+
+---
+
+# ❌ 22. Eliminar productos del carrito
+
+Cada producto tiene un botón para eliminarlo:
+
+```text
+❌
+```
+
+Al presionarlo, el producto se elimina del carrito.
+
+Después el sistema vuelve a calcular automáticamente el total.
+
+Por ejemplo:
+
+Antes:
+
+```text
+Salsa Golf     $3000
+Pizza          $2000
+
+TOTAL: $5000
+```
+
+Eliminamos Pizza:
+
+```text
+Salsa Golf     $3000
+
+TOTAL: $3000
+```
+
+---
+
+# 🧾 23. Finalizar una compra
+
+Cuando todos los productos fueron agregados al carrito, se presiona:
+
+```text
+🧾 Finalizar compra e imprimir ticket
+```
+
+El sistema toma todos los productos del carrito.
+
+Después envía la información a Flask mediante:
+
+```text
+/api/venta
+```
+
+La información enviada contiene los productos y sus cantidades.
+
+Por ejemplo:
+
+```text
+Producto:
+Salsa Golf
+
+Código:
+100000000067
+
+Cantidad:
+2
+
+Precio:
+1500
+```
+
+---
+
+# 📉 24. Descuento automático del stock
+
+Antes de modificar el Excel, el sistema debe comprobar que exista suficiente stock.
+
+Por ejemplo:
+
+```text
+Stock disponible: 20
+Cantidad comprada: 5
+```
+
+Entonces:
+
+```text
+20 - 5 = 15
+```
+
+El nuevo stock será:
+
+```text
+15
+```
+
+---
+
+## ⚠️ Stock insuficiente
+
+Si tenemos:
+
+```text
+Stock disponible: 3
+```
+
+y el cliente intenta comprar:
+
+```text
+Cantidad: 5
+```
+
+el sistema no debe permitir la venta.
+
+Mostrará un mensaje indicando:
+
+```text
+Stock insuficiente.
+Disponible: 3
+```
+
+Esto evita que el stock quede en valores negativos.
+
+---
+
+# 📋 25. Registro de la venta
+
+Cuando una venta se realiza, se utiliza la función:
+
+```python
+stock.registrar_movimiento()
+```
+
+con la operación:
+
+```text
+SALIDA
+```
+
+Esto permite que las ventas de Caja formen parte del historial de movimientos.
+
+La hoja:
+
+```text
+Movimientos
+```
+
+puede contener información como:
+
+| Fecha      | Código       | Producto   | Operación | Cantidad | Stock anterior | Stock resultante |
+| ---------- | ------------ | ---------- | --------- | -------: | -------------: | ---------------: |
+| 01/09/2026 | 100000000067 | Salsa Golf | SALIDA    |        2 |             20 |               18 |
+
+De esta manera podemos saber qué productos fueron vendidos y cómo cambió el stock.
+
+---
+
+# 💾 26. Backup del Excel
+
+El sistema crea backups antes de realizar modificaciones importantes en el archivo Excel.
+
+Los backups se almacenan en:
+
+```text
+backups/
+```
+
+Por ejemplo:
+
+```text
+backups/
+│
+├── productos_2026-09-01_08-31-18.xlsx
+├── productos_2026-09-01_09-15-22.xlsx
+└── ...
+```
+
+Esto permite recuperar información en caso de que ocurra algún problema.
+
+---
+
+# 🌐 27. API de la Caja
+
+La Caja se comunica con Flask mediante rutas especiales llamadas API.
+
+Las principales rutas utilizadas son:
+
+```text
+/api/producto/<codigo>
+```
+
+y:
+
+```text
+/api/venta
+```
+
+---
+
+## 🔎 `/api/producto/<codigo>`
+
+Esta ruta sirve para buscar un producto.
+
+Ejemplo:
+
+```text
+/api/producto/100000000067
+```
+
+El funcionamiento es:
+
+```text
+caja.js
+   ↓
+Flask
+   ↓
+stock.buscar_producto()
+   ↓
+productos_corregido.xlsx
+```
+
+Si el producto existe, Flask devuelve sus datos.
+
+---
+
+## 🧾 `/api/venta`
+
+Esta ruta se utiliza para finalizar una compra.
+
+Recibe:
+
+```text
+Productos
+Código
+Cantidad
+```
+
+Después:
+
+```text
+Flask
+   ↓
+stock.py
+   ↓
+comprobar stock
+   ↓
+registrar SALIDA
+   ↓
+guardar Excel
+```
+
+---
+
+# 🟨 28. JavaScript de la Caja
+
+El archivo:
+
+```text
+static/js/caja.js
+```
+
+se encarga de controlar la parte interactiva de la Caja.
+
+Entre sus funciones se encuentran:
+
+* Detectar el lector.
+* Detectar ENTER.
+* Buscar productos.
+* Agregar productos al carrito.
+* Aumentar cantidades.
+* Calcular subtotales.
+* Calcular el total.
+* Eliminar productos.
+* Finalizar la compra.
+* Mostrar mensajes.
+
+---
+
+## 🔄 Ejemplo del funcionamiento
+
+Cuando se escanea:
+
+```text
+100000000067
+```
+
+JavaScript hace:
+
+```javascript
+buscarProducto("100000000067");
+```
+
+Después realiza:
+
+```javascript
+fetch(
+    `/api/producto/100000000067`
+);
+```
+
+Flask recibe la solicitud.
+
+---
+
+# 🐍 29. Flask y la Caja
+
+Flask se encuentra entre el navegador y Python.
+
+El recorrido es:
+
+```text
+                 NAVEGADOR
+                     │
+                     ▼
+                 caja.js
+                     │
+                     ▼
+                   FLASK
+                     │
+                     ▼
+                 stock.py
+                     │
+                     ▼
+                  EXCEL
+```
+
+Flask recibe las solicitudes de JavaScript y decide qué función de Python debe ejecutar.
+
+---
+
+# 📦 30. Diferencia entre Gestión y Caja
+
+El proyecto tiene dos partes principales.
+
+## 📦 Gestión
+
+La Gestión está pensada para el administrador.
+
+Permite:
+
+* Ver productos.
+* Buscar productos.
+* Agregar stock.
+* Quitar stock.
+* Ver stock bajo.
+* Ver movimientos.
+
+El acceso está protegido mediante login.
+
+---
+
+## 🛒 Caja
+
+La Caja está pensada para realizar ventas.
+
+Permite:
+
+* Escanear productos.
+* Buscar productos automáticamente.
+* Agregar productos al carrito.
+* Modificar cantidades mediante nuevos escaneos.
+* Calcular subtotales.
+* Calcular el total.
+* Eliminar productos.
+* Finalizar compras.
+* Descontar stock.
+* Registrar la salida en Movimientos.
+
+---
+
+# 🔄 31. Flujo completo de una venta
+
+Supongamos que tenemos:
+
+```text
+Producto:
+Salsa Golf
+
+Código:
+100000000067
+
+Precio:
+$1500
+
+Stock:
+20
+```
+
+El cliente compra:
+
+```text
+2 unidades
+```
+
+---
+
+## Paso 1 — Abrir Caja
+
+Entramos a:
+
+```text
+🛒 Caja
+```
+
+---
+
+## Paso 2 — Escanear
+
+Escaneamos:
+
+```text
+100000000067
+```
+
+---
+
+## Paso 3 — Buscar
+
+JavaScript realiza:
+
+```text
+/api/producto/100000000067
+```
+
+Flask recibe el código.
+
+---
+
+## Paso 4 — Consultar Excel
+
+Python busca:
+
+```text
+100000000067
+```
+
+Encuentra:
+
+```text
+Salsa Golf
+$1500
+Stock: 20
+```
+
+---
+
+## Paso 5 — Agregar al carrito
+
+El producto aparece:
+
+```text
+Salsa Golf
+Precio: $1500
+Cantidad: 1
+Subtotal: $1500
+```
+
+---
+
+## Paso 6 — Segundo escaneo
+
+Escaneamos nuevamente:
+
+```text
+100000000067
+```
+
+La cantidad aumenta:
+
+```text
+Cantidad: 2
+```
+
+El subtotal pasa a:
+
+```text
+$1500 × 2 = $3000
+```
+
+---
+
+## Paso 7 — Finalizar
+
+Presionamos:
+
+```text
+🧾 Finalizar compra
+```
+
+---
+
+## Paso 8 — Comprobar stock
+
+El sistema comprueba:
+
+```text
+Stock disponible: 20
+Compra: 2
+```
+
+Hay suficiente stock.
+
+---
+
+## Paso 9 — Descontar
+
+Python realiza:
+
+```text
+20 - 2 = 18
+```
+
+---
+
+## Paso 10 — Guardar Excel
+
+Excel queda:
+
+```text
+Salsa Golf
+Stock: 18
+```
+
+---
+
+## Paso 11 — Registrar movimiento
+
+La hoja `Movimientos` registra:
+
+```text
+Código: 100000000067
+Producto: Salsa Golf
+Operación: SALIDA
+Cantidad: 2
+Stock anterior: 20
+Stock resultante: 18
+```
+
+---
+
+# 🧩 32. ¿Cómo se conectan Python, Excel y Flask?
 
 Esta es una de las partes más importantes del proyecto.
 
@@ -842,32 +1622,25 @@ Excel funciona como el lugar donde guardamos nuestros productos.
 Por ejemplo:
 
 ```text
-Código          Producto        Cantidad
-100000000001    Hamburguesa     20
-100000000002    Pizza           15
-100000000003    Gaseosa         30
+Código          Producto        Cantidad       Precio
+100000000001    Hamburguesa     20             2500
+100000000002    Pizza           15             3000
+100000000003    Gaseosa         30             1500
 ```
-
-El archivo contiene la información que necesita el sistema.
 
 ---
 
 ## 🔵 Python = hace el trabajo
 
-Python es quien se encarga de realizar las operaciones.
+Python realiza las operaciones.
 
 Por ejemplo:
 
-Si tenemos:
-
 ```text
-Hamburguesa
-Stock: 20
-```
+Stock:
+20
 
-y sacamos:
-
-```text
+Venta:
 5
 ```
 
@@ -877,167 +1650,83 @@ Python realiza:
 20 - 5 = 15
 ```
 
-Y después guarda el nuevo valor.
-
 ---
 
-## 🟠 Flask = muestra todo en una página
+## 🟠 Flask = conecta la página con Python
 
-Flask permite que podamos utilizar el sistema desde un navegador.
+Flask recibe las acciones realizadas desde la página.
 
 Por ejemplo:
 
 ```text
-              PÁGINA WEB
-
-        ┌─────────────────────┐
-        │    Gestión Stock    │
-        ├─────────────────────┤
-        │                     │
-        │ Código: 1000000001  │
-        │                     │
-        │ Cantidad: 5         │
-        │                     │
-        │ [ ENTRADA ]         │
-        │ [ SALIDA  ]         │
-        │                     │
-        └─────────────────────┘
-```
-
-Cuando una persona presiona un botón, Flask recibe la acción y se comunica con Python.
-
----
-
-# 🔄 Ejemplo completo
-
-Supongamos que tenemos:
-
-```text
-Producto: Salsa Golf
-Código: 100000000067
-Stock: 20
-```
-
-Una persona pasa el código de barras por el lector.
-
-El lector envía:
-
-```text
-100000000067
-```
-
-Python busca ese código en Excel.
-
-Encuentra:
-
-```text
-Salsa Golf
-Stock: 20
-```
-
-La persona indica:
-
-```text
-Cantidad que sale: 5
-```
-
-Python realiza:
-
-```text
-20 - 5 = 15
-```
-
-Finalmente Excel queda:
-
-```text
-Salsa Golf
-Stock: 15
-```
-
-Y el movimiento puede quedar registrado:
-
-```text
-Producto: Salsa Golf
-Código: 100000000067
-Operación: SALIDA
-Cantidad: 5
-Stock anterior: 20
-Stock actual: 15
-Fecha: ...
+Navegador
+    ↓
+Flask
+    ↓
+Python
+    ↓
+Excel
 ```
 
 ---
 
-# 🧩 16. Flujo completo del sistema
+## 🟣 JavaScript = controla la interacción de Caja
 
-Podemos resumir todo el funcionamiento de esta manera:
+JavaScript permite que la Caja responda rápidamente a las acciones del usuario.
+
+Por ejemplo:
 
 ```text
-          LECTOR DE CÓDIGO DE BARRAS
-                     │
-                     ▼
-                CÓDIGO
-                     │
-                     ▼
-                  PYTHON
-                     │
-          ┌──────────┴──────────┐
-          │                     │
-          ▼                     ▼
-       BUSCAR                 MODIFICAR
-       PRODUCTO                STOCK
-          │                     │
-          └──────────┬──────────┘
-                     ▼
-                   EXCEL
-                     │
-                     ▼
-                MOVIMIENTO
-                     │
-                     ▼
-                  FLASK
-                     │
-                     ▼
-                PÁGINA WEB
+Escanear
+   ↓
+JavaScript detecta ENTER
+   ↓
+Busca producto
+   ↓
+Muestra producto
+   ↓
+Agrega al carrito
 ```
 
 ---
 
-# 🏷️ ¿Cómo funciona el lector de códigos?
+# 🧠 33. Flujo completo del sistema
 
-El **Metrologic MS7120** se conecta mediante USB.
-
-Una vez conectado y configurado correctamente, normalmente funciona de una manera muy sencilla:
+Podemos resumir todo el sistema de esta manera:
 
 ```text
-Código de barras
-       ↓
-Metrologic MS7120
-       ↓
-      USB
-       ↓
- Raspberry Pi
-       ↓
-     Python
+                         USUARIO
+                            │
+                            ▼
+                       PÁGINA WEB
+                          FLASK
+                            │
+              ┌─────────────┴─────────────┐
+              │                           │
+              ▼                           ▼
+          GESTIÓN                       CAJA
+              │                           │
+              │                      caja.js
+              │                           │
+              │                           ▼
+              │                    LECTOR USB
+              │                           │
+              └─────────────┬─────────────┘
+                            ▼
+                         stock.py
+                            │
+                            ▼
+                   productos_corregido.xlsx
+                            │
+                  ┌─────────┴─────────┐
+                  │                   │
+                  ▼                   ▼
+                STOCK             MOVIMIENTOS
 ```
-
-El lector lee el código y envía los números al equipo.
-
-Para el programa, es parecido a escribir el código utilizando un teclado.
-
-Por ejemplo, si el código es:
-
-```text
-100000000067
-```
-
-el lector envía ese número.
-
-Esto permite buscar el producto automáticamente.
 
 ---
 
-# 🔢 Generación de códigos de barras
+# 🏷️ Generación de códigos de barras
 
 El proyecto también puede utilizar Python para crear códigos de barras.
 
@@ -1055,14 +1744,9 @@ Por ejemplo:
 100000000067
 ```
 
-se convierte en una imagen similar a:
+puede convertirse en una imagen de código de barras.
 
-```text
-|||| ||| |||| || |||| ||| ||
-100000000067
-```
-
-La imagen puede almacenarse y posteriormente utilizarse para identificar el producto.
+Después esa imagen puede utilizarse para identificar el producto.
 
 ---
 
@@ -1070,7 +1754,7 @@ La imagen puede almacenarse y posteriormente utilizarse para identificar el prod
 
 El sistema utiliza Excel no solamente para guardar el stock.
 
-También puede utilizar una hoja llamada:
+También utiliza una hoja llamada:
 
 ```text
 Movimientos
@@ -1082,14 +1766,20 @@ Por ejemplo:
 
 | Fecha      | Código       | Producto   | Operación | Cantidad | Stock anterior | Stock actual |
 | ---------- | ------------ | ---------- | --------- | -------: | -------------: | -----------: |
-| 27/08/2026 | 100000000067 | Salsa Golf | SALIDA    |        5 |             20 |           15 |
-| 27/08/2026 | 100000000002 | Pizza      | ENTRADA   |       10 |             15 |           25 |
+| 01/09/2026 | 100000000067 | Salsa Golf | SALIDA    |        5 |             20 |           15 |
+| 01/09/2026 | 100000000002 | Pizza      | ENTRADA   |       10 |             15 |           25 |
 
 De esta manera podemos saber qué ocurrió con el stock.
 
+Las ventas realizadas desde Caja también pueden registrarse como:
+
+```text
+SALIDA
+```
+
 ---
 
-# ⚠️ 17. Problemas frecuentes
+# ⚠️ 34. Problemas frecuentes
 
 ## "python3: command not found"
 
@@ -1178,6 +1868,104 @@ pip install Pillow
 
 ---
 
+# 🛒 Problemas de Caja
+
+## ❌ "Error de conexión"
+
+Si Caja muestra:
+
+```text
+❌ Error de conexión
+```
+
+cuando escaneamos un producto, debemos comprobar:
+
+1. Que Flask esté ejecutándose.
+2. Que el navegador pueda acceder al servidor.
+3. Que exista la ruta:
+
+```text
+/api/producto/<codigo>
+```
+
+4. Que `stock.py` esté disponible.
+5. Que exista `productos_corregido.xlsx`.
+6. Que el código exista en Excel.
+
+---
+
+## ❌ "Producto no encontrado"
+
+Si aparece:
+
+```text
+❌ Producto no encontrado
+```
+
+debemos comprobar:
+
+* Que el código esté escrito correctamente.
+* Que el código exista en Excel.
+* Que esté en la columna `Código de serie`.
+* Que no tenga espacios adicionales.
+* Que el producto esté correctamente registrado.
+
+---
+
+## ❌ La Caja no detecta el lector
+
+Comprobar:
+
+1. Que el lector esté conectado por USB.
+2. Que Ubuntu/Raspberry Pi lo reconozca.
+3. Que el cursor esté dentro del campo de código.
+4. Que el lector envíe ENTER después del código.
+5. Probar escribiendo manualmente un código en el campo.
+
+---
+
+## ❌ La Caja encuentra el producto pero no lo agrega
+
+Comprobar que la respuesta de Flask contenga:
+
+```text
+codigo
+nombre
+precio
+stock
+```
+
+El JavaScript utiliza estos datos para crear el producto del carrito.
+
+---
+
+## ❌ "Stock insuficiente"
+
+Esto significa que el sistema detectó que la cantidad solicitada es mayor que la cantidad disponible.
+
+Por ejemplo:
+
+```text
+Stock: 2
+Compra: 5
+```
+
+No se permite realizar la operación.
+
+---
+
+## ❌ No se actualiza el Excel
+
+Comprobar:
+
+* Que `productos_corregido.xlsx` exista.
+* Que el archivo no esté abierto en LibreOffice/Excel.
+* Que Python tenga permisos para modificarlo.
+* Que la carpeta de backups exista.
+* Que no haya otro proceso utilizando el archivo.
+
+---
+
 # ❗ Error importante: "sudo"
 
 En Ubuntu podemos encontrarnos con errores como:
@@ -1216,7 +2004,11 @@ Después:
 source .venv/bin/activate
 ```
 
-Y ya podemos trabajar con el proyecto.
+Y ejecutamos:
+
+```bash
+python3 app.py
+```
 
 Cuando terminemos:
 
@@ -1317,11 +2109,72 @@ Instalamos todo:
 pip install pandas openpyxl python-barcode Pillow Flask
 ```
 
-Y ya podemos ejecutar el proyecto.
+Y ya podemos ejecutar:
+
+```bash
+python3 app.py
+```
 
 ---
 
-# 🏁 18. Resumen
+# 🧾 Sistema completo de Caja
+
+El funcionamiento de Caja puede resumirse en:
+
+```text
+┌──────────────────────────────┐
+│       🛒 SISTEMA DE CAJA     │
+└──────────────┬───────────────┘
+               │
+               ▼
+       ESCANEAR PRODUCTO
+               │
+               ▼
+          CÓDIGO DE BARRAS
+               │
+               ▼
+            caja.js
+               │
+               ▼
+        /api/producto
+               │
+               ▼
+             FLASK
+               │
+               ▼
+            stock.py
+               │
+               ▼
+             EXCEL
+               │
+               ▼
+       PRODUCTO + PRECIO
+               │
+               ▼
+           🛒 CARRITO
+               │
+               ▼
+        CALCULAR TOTAL
+               │
+               ▼
+       FINALIZAR COMPRA
+               │
+               ▼
+        COMPROBAR STOCK
+               │
+               ▼
+        DESCONTAR STOCK
+               │
+               ▼
+       REGISTRAR SALIDA
+               │
+               ▼
+             EXCEL
+```
+
+---
+
+# 🏁 35. Resumen
 
 Para poner en funcionamiento el proyecto completo:
 
@@ -1337,6 +2190,7 @@ Para poner en funcionamiento el proyecto completo:
 8. Abrir el proyecto.
 9. Revisar la configuración.
 10. Ejecutar Flask.
+11. Abrir la página desde el navegador.
 
 ### En la Raspberry Pi
 
@@ -1349,24 +2203,41 @@ Para poner en funcionamiento el proyecto completo:
 7. Crear el entorno virtual.
 8. Instalar las librerías.
 9. Conectar el lector de códigos de barras.
-10. Ejecutar el sistema.
+10. Ejecutar Flask.
+11. Abrir el sistema desde el navegador.
 
-### Para administrar la Raspberry
+### Para utilizar Gestión
 
-Podemos utilizar:
+1. Abrir la página.
+2. Entrar a Gestión.
+3. Iniciar sesión.
+4. Consultar productos.
+5. Registrar entradas y salidas.
+6. Consultar stock bajo.
+7. Consultar movimientos.
 
-* **FileZilla** → para mover archivos entre nuestra computadora y la Raspberry.
-* **VNC Viewer** → para ver y controlar la pantalla de la Raspberry desde otra computadora.
+### Para utilizar Caja
+
+1. Abrir la página.
+2. Entrar a Caja.
+3. Escanear un producto.
+4. Esperar a que aparezca el producto.
+5. Escanear nuevamente si se necesitan más unidades.
+6. Revisar el carrito.
+7. Revisar el total.
+8. Finalizar la compra.
+9. Comprobar que el stock se haya actualizado.
+10. Comprobar el movimiento registrado.
 
 ---
 
 # 💡 Idea principal del proyecto
 
-La idea del sistema puede resumirse en una sola frase:
+La idea del sistema puede resumirse en:
 
-> **El lector identifica el producto, Python realiza las operaciones, Excel guarda la información y Flask permite utilizar todo desde una página web.**
+> **El lector identifica el producto, JavaScript controla la Caja, Flask conecta la página con Python, `stock.py` realiza las operaciones y Excel guarda la información.**
 
-De esta manera tenemos un sistema que combina hardware y software para facilitar la administración del stock.
+De esta manera tenemos un sistema que combina hardware y software para facilitar la administración del stock y la realización de ventas.
 
 ---
 
@@ -1374,31 +2245,31 @@ De esta manera tenemos un sistema que combina hardware y software para facilitar
 
 ### Python
 
-[Python — Página oficial](https://www.python.org/?utm_source=chatgpt.com)
+https://www.python.org/
 
 ### Flask
 
-[Flask — Documentación oficial](https://flask.palletsprojects.com/?utm_source=chatgpt.com)
+https://flask.palletsprojects.com/
 
 ### Visual Studio Code
 
-[Visual Studio Code — Página oficial](https://code.visualstudio.com/?utm_source=chatgpt.com)
+https://code.visualstudio.com/
 
 ### Raspberry Pi
 
-[Raspberry Pi — Página oficial](https://www.raspberrypi.com/?utm_source=chatgpt.com)
+https://www.raspberrypi.com/
 
 ### Raspberry Pi Imager
 
-[Raspberry Pi Imager y sistemas operativos](https://www.raspberrypi.com/software/?utm_source=chatgpt.com)
+https://www.raspberrypi.com/software/
 
 ### FileZilla
 
-[FileZilla — Página oficial](https://filezilla-project.org/?utm_source=chatgpt.com)
+https://filezilla-project.org/
 
 ### RealVNC
 
-[RealVNC — Página oficial](https://www.realvnc.com/?utm_source=chatgpt.com)
+https://www.realvnc.com/
 
 ---
 
@@ -1414,8 +2285,9 @@ Si aparece un error:
 2. Comprobar que el entorno virtual esté activado.
 3. Comprobar que las librerías estén instaladas.
 4. Comprobar que estamos dentro de la carpeta correcta.
-5. Revisar la sección de problemas frecuentes.
-6. Si el problema continúa, consultar el mensaje completo del error.
+5. Comprobar que Flask esté ejecutándose.
+6. Revisar la sección de problemas frecuentes.
+7. Si el problema continúa, consultar el mensaje completo del error.
 
 No recomendamos borrar archivos del sistema ni ejecutar comandos que no entendamos.
 
@@ -1423,4 +2295,4 @@ No recomendamos borrar archivos del sistema ni ejecutar comandos que no entendam
 
 Este proyecto fue pensado para aprender y, al mismo tiempo, crear una herramienta que pueda utilizarse en una situación real.
 
-La intención de este README es que cualquier persona pueda descargar el proyecto y seguir los pasos necesarios para ponerlo en funcionamiento, incluso si nunca trabajó anteriormente con Python, Flask, Raspberry Pi o códigos de barras.
+La intención de este README es que cualquier persona pueda descargar el proyecto y seguir los pasos necesarios para ponerlo en funcionamiento, incluso si nunca trabajó anteriormente con Python, Flask, Raspberry Pi, Excel o códigos de barras.
