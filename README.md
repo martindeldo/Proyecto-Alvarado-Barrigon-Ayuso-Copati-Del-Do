@@ -1,14 +1,16 @@
-# Proyecto-Alvaredo-Barrigon-Ayuso-Copati-Del-Do
+# 🛒 Proyecto-Alvaredo-Barrigon-Ayuso-Copati-Del-Do
 
-# 🛒 Sistema de Gestión de Stock y Caja
+# 🛒 Sistema de Gestión de Stock, Caja y Recibos
 
-Sistema de gestión de productos, stock y caja registradora desarrollado con **Python, Excel, Flask y Raspberry Pi**.
+Sistema de gestión de productos, stock y caja registradora desarrollado con **Python, Excel, Flask, JavaScript y Raspberry Pi**.
 
-El proyecto permite administrar productos, controlar entradas y salidas de stock, consultar productos, detectar productos con poco stock, registrar los movimientos realizados y realizar ventas mediante un sistema de caja.
+El proyecto permite administrar productos, controlar entradas y salidas de stock, consultar productos, detectar productos con poco stock, registrar movimientos y realizar ventas mediante un sistema de Caja.
 
 Además, el sistema puede utilizar un **lector de códigos de barras conectado por USB** para identificar productos rápidamente.
 
-La información del sistema se almacena en un archivo de **Excel**, mientras que Flask permite utilizar las diferentes funciones desde una página web.
+La información del sistema se almacena en un archivo de **Excel**, mientras que **Flask** permite utilizar las diferentes funciones desde una página web.
+
+Como complemento, el sistema de Caja puede permitir que el cliente reciba el **recibo de su compra mediante Gmail**, enviándolo a la dirección de correo electrónico proporcionada durante la compra.
 
 ---
 
@@ -43,15 +45,20 @@ La información del sistema se almacena en un archivo de **Excel**, mientras que
 * [Descuento automático del stock](#-24-descuento-automático-del-stock)
 * [Registro de la venta](#-25-registro-de-la-venta)
 * [Backup del Excel](#-26-backup-del-excel)
-* [API de la Caja](#-27-api-de-la-caja)
-* [JavaScript de la Caja](#-28-javascript-de-la-caja)
-* [Flask y la Caja](#-29-flask-y-la-caja)
-* [Diferencia entre Gestión y Caja](#-30-diferencia-entre-gestión-y-caja)
-* [Flujo completo de una venta](#-31-flujo-completo-de-una-venta)
-* [¿Cómo se conectan Python, Excel y Flask?](#-32-cómo-se-conectan-python-excel-y-flask)
-* [Flujo completo del sistema](#-33-flujo-completo-del-sistema)
-* [Problemas frecuentes](#-34-problemas-frecuentes)
-* [Resumen](#-35-resumen)
+* [Recibo de compra](#-27-recibo-de-compra)
+* [Enviar el recibo por Gmail](#-28-enviar-el-recibo-por-gmail)
+* [Configurar Gmail](#-29-configurar-gmail)
+* [Contraseña de aplicación de Google](#-30-contraseña-de-aplicación-de-google)
+* [Funcionamiento del envío del recibo](#-31-funcionamiento-del-envío-del-recibo)
+* [API de la Caja](#-32-api-de-la-caja)
+* [JavaScript de la Caja](#-33-javascript-de-la-caja)
+* [Flask y la Caja](#-34-flask-y-la-caja)
+* [Diferencia entre Gestión y Caja](#-35-diferencia-entre-gestión-y-caja)
+* [Flujo completo de una venta](#-36-flujo-completo-de-una-venta)
+* [¿Cómo se conectan Python, Excel y Flask?](#-37-cómo-se-conectan-python-excel-y-flask)
+* [Flujo completo del sistema](#-38-flujo-completo-del-sistema)
+* [Problemas frecuentes](#-39-problemas-frecuentes)
+* [Resumen](#-40-resumen)
 
 ---
 
@@ -77,6 +84,8 @@ En lugar de tener que controlar todo manualmente, el programa permite:
 * Registrar las ventas como movimientos de salida.
 * Crear backups del archivo Excel.
 * Ejecutar el sistema en una Raspberry Pi.
+* Generar un recibo de compra.
+* Enviar el recibo al correo electrónico del cliente.
 
 El objetivo es que una persona pueda descargar el proyecto, instalar lo necesario y ponerlo a funcionar sin tener conocimientos avanzados de programación.
 
@@ -97,17 +106,21 @@ Necesitamos una computadora con:
 
 ---
 
-## 📦 Librerías utilizadas
+# 📦 Librerías utilizadas
 
 El proyecto utiliza principalmente:
 
-| Librería         | ¿Para qué sirve?                          |
-| ---------------- | ----------------------------------------- |
-| `pandas`         | Ayuda a trabajar con los datos de Excel   |
-| `openpyxl`       | Permite leer y modificar archivos `.xlsx` |
-| `python-barcode` | Permite crear códigos de barras           |
-| `Pillow`         | Permite trabajar con imágenes             |
-| `Flask`          | Permite crear la página web del sistema   |
+| Librería         | ¿Para qué sirve?                                 |
+| ---------------- | ------------------------------------------------ |
+| `pandas`         | Ayuda a trabajar con los datos de Excel          |
+| `openpyxl`       | Permite leer y modificar archivos `.xlsx`        |
+| `python-barcode` | Permite crear códigos de barras                  |
+| `Pillow`         | Permite trabajar con imágenes                    |
+| `Flask`          | Permite crear la página web del sistema          |
+| `smtplib`        | Permite enviar correos electrónicos desde Python |
+| `email`          | Permite construir el contenido del correo        |
+
+> `smtplib` y `email` forman parte de la biblioteca estándar de Python, por lo que no es necesario instalarlas mediante `pip`.
 
 ---
 
@@ -148,7 +161,7 @@ El sistema tiene varias partes que trabajan juntas:
              ▼                       ▼
        ┌─────────────┐        ┌─────────────┐
        │   GESTIÓN   │        │    CAJA     │
-       │   DE STOCK  │        │  REGISTROS  │
+       │   DE STOCK  │        │    VENTAS   │
        └──────┬──────┘        └──────┬──────┘
               │                      │
               └──────────┬───────────┘
@@ -162,6 +175,12 @@ El sistema tiene varias partes que trabajan juntas:
                   ┌─────────────┐
                   │    EXCEL    │
                   │   STOCK     │
+                  └─────────────┘
+                         │
+                         ▼
+                  ┌─────────────┐
+                  │    GMAIL    │
+                  │   RECIBO    │
                   └─────────────┘
 ```
 
@@ -177,6 +196,8 @@ En palabras simples:
 
 **Excel guarda la información.**
 
+**Gmail permite enviar el recibo al cliente.**
+
 ---
 
 # 🐧 1. Preparar Ubuntu
@@ -191,7 +212,7 @@ Podemos hacerlo presionando:
 Ctrl + Alt + T
 ```
 
-Se abrirá una ventana negra donde podemos escribir comandos.
+Se abrirá una ventana donde podemos escribir comandos.
 
 No hay que preocuparse por esto.
 
@@ -230,13 +251,11 @@ La escribimos y presionamos Enter.
 
 > Importante: cuando escribimos la contraseña en la terminal, normalmente no aparecen letras ni símbolos. Esto es normal.
 
-Python recomienda utilizar entornos separados para cada proyecto, especialmente en Linux, para evitar que las librerías de un proyecto interfieran con otros proyectos.
-
 ---
 
 # 📁 3. Crear el entorno virtual
 
-Un entorno virtual es simplemente una carpeta especial donde vamos a guardar las librerías que necesita este proyecto.
+Un entorno virtual es una carpeta especial donde vamos a guardar las librerías que necesita este proyecto.
 
 Esto evita modificar las librerías generales de Ubuntu.
 
@@ -260,15 +279,13 @@ Esto crea una carpeta llamada:
 .venv
 ```
 
-Dentro de ella estarán las herramientas que necesita nuestro proyecto.
-
 ---
 
 # ▶️ 4. Activar el entorno virtual
 
 Cada vez que vayamos a trabajar con el proyecto debemos activar el entorno.
 
-En Ubuntu escribimos:
+En Ubuntu:
 
 ```bash
 source .venv/bin/activate
@@ -292,9 +309,7 @@ indica que el entorno está activado.
 
 # 📚 5. Instalar las librerías
 
-Con el entorno virtual activado, podemos instalar todas las librerías necesarias.
-
-Ejecutamos:
+Con el entorno virtual activado:
 
 ```bash
 pip install pandas
@@ -330,8 +345,6 @@ También podemos instalar todo junto:
 pip install pandas openpyxl python-barcode Pillow Flask
 ```
 
-Esperamos a que termine la instalación.
-
 ---
 
 # 🔎 ¿Para qué sirve cada librería?
@@ -341,15 +354,6 @@ Esperamos a que termine la instalación.
 `pandas` nos ayuda a trabajar con información organizada.
 
 En nuestro proyecto puede utilizarse para leer y manejar los datos de los productos.
-
-Por ejemplo:
-
-```text
-Producto       Cantidad
-Hamburguesa    10
-Pizza          5
-Gaseosa        20
-```
 
 ---
 
@@ -366,13 +370,11 @@ Gracias a esta librería podemos:
 * Guardar movimientos.
 * Guardar cambios.
 
-Nuestro archivo `.xlsx` es el lugar donde se guarda la información del sistema.
-
 ---
 
 ## python-barcode
 
-Esta librería permite generar códigos de barras desde Python.
+Permite generar códigos de barras desde Python.
 
 Por ejemplo:
 
@@ -382,21 +384,19 @@ Por ejemplo:
 
 puede convertirse en una imagen de código de barras.
 
-Después esa imagen puede guardarse y utilizarse en el sistema.
-
 ---
 
 ## Pillow
 
-`Pillow` permite trabajar con imágenes.
+Permite trabajar con imágenes.
 
-En nuestro caso es importante porque los códigos de barras que generamos pueden guardarse como imágenes.
+Es importante porque los códigos de barras pueden guardarse como imágenes.
 
 ---
 
 ## Flask
 
-Flask es la parte que permite convertir nuestro programa en una página web.
+Flask permite convertir nuestro programa en una página web.
 
 Gracias a Flask podemos tener una página desde la cual:
 
@@ -407,7 +407,7 @@ Gracias a Flask podemos tener una página desde la cual:
 * Consultar movimientos.
 * Acceder a la Caja.
 * Realizar ventas.
-* Utilizar el sistema desde un navegador.
+* Enviar recibos.
 
 ---
 
@@ -419,13 +419,11 @@ Si todavía no lo instalamos:
 pip install Flask
 ```
 
-Podemos comprobar que está instalado con:
+Podemos comprobarlo con:
 
 ```bash
 pip show Flask
 ```
-
-Si aparece información sobre Flask, la instalación funcionó.
 
 ---
 
@@ -439,23 +437,19 @@ Para este proyecto utilizamos:
 
 **Visual Studio Code**
 
-Es un programa que nos permite abrir y modificar los archivos del proyecto de manera cómoda.
-
-Podemos descargarlo desde la página oficial:
+Podemos descargarlo desde:
 
 https://code.visualstudio.com/
 
 En Ubuntu podemos descargar el archivo `.deb`.
 
-Después de descargarlo, podemos instalarlo desde la terminal.
-
-Por ejemplo, si el archivo está en la carpeta Descargas:
+Después:
 
 ```bash
 cd ~/Descargas
 ```
 
-Luego:
+Y:
 
 ```bash
 sudo apt install ./code_*.deb
@@ -465,15 +459,13 @@ sudo apt install ./code_*.deb
 
 # 💻 8. Abrir y modificar el proyecto
 
-Una vez instalado Visual Studio Code podemos abrir la carpeta del proyecto.
-
-Desde la terminal:
+Entramos a la carpeta:
 
 ```bash
 cd ~/Proyecto
 ```
 
-Y después:
+Después:
 
 ```bash
 code .
@@ -481,7 +473,7 @@ code .
 
 El punto significa:
 
-> "Abrí la carpeta en la que estoy".
+> "Abrir la carpeta en la que estoy".
 
 ---
 
@@ -527,9 +519,7 @@ La carpeta `.venv` no debería modificarse manualmente.
 
 # ▶️ 9. Ejecutar el sistema
 
-Primero abrimos una terminal.
-
-Entramos en la carpeta del proyecto:
+Primero:
 
 ```bash
 cd ~/Proyecto
@@ -564,8 +554,6 @@ En este proyecto Flask utiliza el puerto:
 ```text
 4000
 ```
-
-Podemos copiar la dirección y abrirla en el navegador.
 
 Si estamos utilizando la Raspberry Pi desde otro dispositivo de la misma red, podemos utilizar la dirección IP de la Raspberry.
 
@@ -602,8 +590,6 @@ Necesitamos:
 * Fuente de alimentación.
 
 Para instalar el sistema operativo podemos utilizar **Raspberry Pi Imager**.
-
-La página oficial de Raspberry Pi ofrece Raspberry Pi OS y Raspberry Pi Imager.
 
 Podemos descargarlo desde:
 
@@ -645,21 +631,17 @@ Raspberry Pi OS
 
 ## Paso 5 — Elegir la microSD
 
-Seleccionamos nuestra tarjeta microSD.
+Seleccionamos nuestra tarjeta.
 
 **Mucho cuidado en este paso.**
 
 La tarjeta será borrada.
 
-Debemos asegurarnos de seleccionar la tarjeta correcta.
-
 ---
 
 ## Paso 6 — Escribir el sistema
 
-Presionamos el botón para comenzar la instalación.
-
-Raspberry Pi Imager descargará el sistema y lo colocará en la microSD.
+Presionamos el botón para comenzar.
 
 Cuando termine, retiramos la tarjeta de forma segura.
 
@@ -667,9 +649,9 @@ Cuando termine, retiramos la tarjeta de forma segura.
 
 # 🔌 12. Conectar el lector de códigos de barras
 
-El lector de códigos de barras se conecta mediante USB.
+El lector se conecta mediante USB.
 
-La idea es:
+El funcionamiento es:
 
 ```text
 Código de barras
@@ -685,31 +667,23 @@ La mayoría de lectores USB funcionan como un dispositivo HID.
 
 Esto significa que el lector envía los números como si fueran escritos mediante un teclado.
 
-Por ejemplo, si el código es:
+Por ejemplo:
 
 ```text
 100000000067
 ```
 
-el lector envía:
-
-```text
-100000000067
-```
-
-y normalmente termina enviando un:
+Normalmente también envía:
 
 ```text
 ENTER
 ```
 
-Esto permite que JavaScript detecte automáticamente que terminó el escaneo.
-
 ---
 
 # 📦 13. Usar FileZilla
 
-FileZilla es un programa que permite mover archivos entre dos computadoras.
+FileZilla permite mover archivos entre computadoras.
 
 En nuestro caso:
 
@@ -724,20 +698,18 @@ RASPBERRY PI
 Podemos utilizarlo para copiar:
 
 * Archivos Python.
-* Archivos HTML.
-* Archivos CSS.
+* HTML.
+* CSS.
 * JavaScript.
 * Imágenes.
-* Archivos de Excel.
-* Otros archivos del proyecto.
+* Excel.
+* Otros archivos.
 
 ---
 
 # 🖥️ 14. Usar VNC Viewer
 
-VNC permite ver y controlar la pantalla de otra computadora desde nuestro propio equipo.
-
-En nuestro caso:
+VNC permite controlar la Raspberry Pi de forma remota.
 
 ```text
 Nuestra computadora
@@ -747,15 +719,13 @@ Nuestra computadora
  Raspberry Pi
 ```
 
-Esto significa que podemos controlar la Raspberry Pi como si estuviéramos frente a ella.
+Podemos utilizar la Raspberry Pi sin tener que conectar permanentemente monitor, teclado y mouse.
 
 ---
 
 # 🛒 15. Sistema de Caja
 
-El sistema de Caja permite realizar una venta utilizando el lector de códigos de barras.
-
-A diferencia de la sección de Gestión, donde administramos el stock, la Caja está pensada para el momento en el que un cliente realiza una compra.
+La Caja permite realizar una venta utilizando el lector de códigos.
 
 El funcionamiento general es:
 
@@ -781,23 +751,26 @@ El funcionamiento general es:
           Calcular total
                 │
                 ▼
-       Finalizar la compra
+       Finalizar compra
                 │
                 ▼
-       Descontar el stock
+       Descontar stock
                 │
                 ▼
       Registrar movimiento
                 │
                 ▼
-              EXCEL
+        Generar recibo
+                │
+                ▼
+       Enviar por Gmail
 ```
 
 ---
 
 # 🏪 ¿Cómo entrar a Caja?
 
-Desde la página principal encontramos dos opciones:
+Desde la página principal encontramos:
 
 ```text
 📦 Gestión de productos
@@ -805,33 +778,17 @@ Desde la página principal encontramos dos opciones:
 🛒 Caja
 ```
 
-La opción:
+La Gestión está pensada para administrar el sistema.
 
-```text
-📦 Gestión de productos
-```
-
-requiere iniciar sesión como administrador.
-
-La opción:
-
-```text
-🛒 Caja
-```
-
-puede entrar directamente a la sección de Caja.
-
-Esto permite separar las tareas administrativas de las tareas de venta.
+La Caja está pensada para realizar ventas.
 
 ---
 
 # 🔐 Diferencia entre administrador y Caja
 
-El sistema utiliza una sesión para proteger las funciones administrativas.
+La Gestión necesita iniciar sesión.
 
-La Gestión de productos necesita que el usuario esté autenticado.
-
-Por ejemplo:
+La Caja está destinada al proceso de venta.
 
 ```text
 Página principal
@@ -843,23 +800,13 @@ Página principal
        │               │
        ▼               ▼
     Login          caja.html
-       │
-       ▼
-   Gestión de
-    productos
 ```
-
-De esta manera:
-
-**Gestión = administración del sistema.**
-
-**Caja = realización de ventas.**
 
 ---
 
 # 🔎 16. ¿Cómo funciona la Caja?
 
-La página de Caja contiene un campo donde se coloca el código del producto.
+La Caja contiene un campo donde se coloca el código.
 
 Por ejemplo:
 
@@ -895,37 +842,27 @@ Excel
 
 # 🏷️ 17. Lector de códigos en Caja
 
-Cuando el lector escanea un producto, envía el código al campo correspondiente.
-
-Por ejemplo:
+Cuando el lector escanea:
 
 ```text
 100000000067
 ```
 
-El JavaScript espera el:
+JavaScript recibe el código.
+
+Normalmente espera el:
 
 ```text
 ENTER
 ```
 
-Cuando lo recibe, toma el código y busca el producto.
-
-La función utilizada es:
-
-```javascript
-buscarProducto(codigo);
-```
-
-El sistema no necesita que el usuario escriba manualmente el código.
-
-Esto hace que el proceso de venta sea mucho más rápido.
+Cuando lo recibe, busca el producto.
 
 ---
 
 # 🔎 18. Buscar un producto
 
-Cuando se escanea un código, `caja.js` realiza una solicitud:
+JavaScript puede realizar:
 
 ```javascript
 fetch(`/api/producto/${codigo}`)
@@ -937,17 +874,9 @@ Por ejemplo:
 /api/producto/100000000067
 ```
 
-Flask recibe esa solicitud.
+Flask recibe la solicitud y busca el producto.
 
-Después utiliza:
-
-```python
-stock.buscar_producto(codigo)
-```
-
-para buscar el producto en Excel.
-
-Si encuentra el producto, devuelve información como:
+Puede devolver:
 
 ```text
 Código
@@ -967,25 +896,11 @@ Stock: 20
 
 ---
 
-# ❌ Producto no encontrado
-
-Si el código no existe en Excel, la Caja muestra:
-
-```text
-❌ Producto no encontrado
-```
-
-Esto evita agregar al carrito un producto que no está registrado.
-
----
-
 # 🛍️ 19. Carrito de compras
 
 Cada producto escaneado se agrega a un carrito.
 
-El carrito se mantiene en JavaScript.
-
-Por ejemplo:
+Ejemplo:
 
 ```text
 ┌───────────────────────────────────────────────────────┐
@@ -996,51 +911,23 @@ Por ejemplo:
 └───────────────────────────────────────────────────────┘
 ```
 
-El carrito permite acumular varios productos antes de finalizar la venta.
-
 ---
 
 # 🔢 20. Cantidad de productos
 
-Si escaneamos el mismo producto más de una vez, el sistema aumenta automáticamente la cantidad.
-
-Por ejemplo:
-
-Primer escaneo:
+Si escaneamos el mismo producto varias veces, la cantidad aumenta.
 
 ```text
-Salsa Golf
-Cantidad: 1
-```
-
-Segundo escaneo:
-
-```text
-Salsa Golf
-Cantidad: 2
-```
-
-Tercer escaneo:
-
-```text
-Salsa Golf
-Cantidad: 3
-```
-
-El producto no se agrega como tres filas diferentes.
-
-Se mantiene como un único producto con cantidad:
-
-```text
-Salsa Golf
-Cantidad: 3
+Primer escaneo → Cantidad: 1
+Segundo escaneo → Cantidad: 2
+Tercer escaneo → Cantidad: 3
 ```
 
 ---
 
 # 💰 21. Cálculo del total
 
-Cada producto tiene:
+El sistema realiza:
 
 ```text
 Precio × Cantidad = Subtotal
@@ -1049,7 +936,6 @@ Precio × Cantidad = Subtotal
 Por ejemplo:
 
 ```text
-Salsa Golf
 $1500 × 2 = $3000
 ```
 
@@ -1061,88 +947,52 @@ Pizza            $2000
 Gaseosa          $1500
 ```
 
-el sistema calcula:
+Entonces:
 
 ```text
 TOTAL = $6500
 ```
 
-El total se actualiza automáticamente cada vez que agregamos o eliminamos un producto.
-
 ---
 
 # ❌ 22. Eliminar productos del carrito
 
-Cada producto tiene un botón para eliminarlo:
+Cada producto tiene un botón:
 
 ```text
 ❌
 ```
 
-Al presionarlo, el producto se elimina del carrito.
-
-Después el sistema vuelve a calcular automáticamente el total.
-
-Por ejemplo:
-
-Antes:
-
-```text
-Salsa Golf     $3000
-Pizza          $2000
-
-TOTAL: $5000
-```
-
-Eliminamos Pizza:
-
-```text
-Salsa Golf     $3000
-
-TOTAL: $3000
-```
+Al presionarlo, se elimina del carrito y el total vuelve a calcularse.
 
 ---
 
 # 🧾 23. Finalizar una compra
 
-Cuando todos los productos fueron agregados al carrito, se presiona:
+Cuando todos los productos están cargados:
 
 ```text
-🧾 Finalizar compra e imprimir ticket
+🧾 Finalizar compra
 ```
 
-El sistema toma todos los productos del carrito.
-
-Después envía la información a Flask mediante:
-
-```text
-/api/venta
-```
-
-La información enviada contiene los productos y sus cantidades.
+El sistema toma los productos del carrito y los envía a Flask.
 
 Por ejemplo:
 
 ```text
-Producto:
-Salsa Golf
-
-Código:
-100000000067
-
-Cantidad:
-2
-
-Precio:
-1500
+Producto: Salsa Golf
+Código: 100000000067
+Cantidad: 2
+Precio: 1500
 ```
+
+Después Flask procesa la venta.
 
 ---
 
 # 📉 24. Descuento automático del stock
 
-Antes de modificar el Excel, el sistema debe comprobar que exista suficiente stock.
+Antes de modificar Excel, se comprueba que haya suficiente stock.
 
 Por ejemplo:
 
@@ -1157,7 +1007,7 @@ Entonces:
 20 - 5 = 15
 ```
 
-El nuevo stock será:
+Nuevo stock:
 
 ```text
 15
@@ -1165,48 +1015,33 @@ El nuevo stock será:
 
 ---
 
-## ⚠️ Stock insuficiente
+# ⚠️ Stock insuficiente
 
-Si tenemos:
+Si:
 
 ```text
 Stock disponible: 3
+Cantidad comprada: 5
 ```
 
-y el cliente intenta comprar:
+la venta no debe realizarse.
 
-```text
-Cantidad: 5
-```
-
-el sistema no debe permitir la venta.
-
-Mostrará un mensaje indicando:
+El sistema mostrará:
 
 ```text
 Stock insuficiente.
 Disponible: 3
 ```
 
-Esto evita que el stock quede en valores negativos.
-
 ---
 
 # 📋 25. Registro de la venta
 
-Cuando una venta se realiza, se utiliza la función:
-
-```python
-stock.registrar_movimiento()
-```
-
-con la operación:
+Cuando se realiza una venta, se registra como una operación:
 
 ```text
 SALIDA
 ```
-
-Esto permite que las ventas de Caja formen parte del historial de movimientos.
 
 La hoja:
 
@@ -1214,19 +1049,17 @@ La hoja:
 Movimientos
 ```
 
-puede contener información como:
+puede contener:
 
 | Fecha      | Código       | Producto   | Operación | Cantidad | Stock anterior | Stock resultante |
 | ---------- | ------------ | ---------- | --------- | -------: | -------------: | ---------------: |
 | 01/09/2026 | 100000000067 | Salsa Golf | SALIDA    |        2 |             20 |               18 |
 
-De esta manera podemos saber qué productos fueron vendidos y cómo cambió el stock.
-
 ---
 
 # 💾 26. Backup del Excel
 
-El sistema crea backups antes de realizar modificaciones importantes en el archivo Excel.
+El sistema crea backups antes de realizar modificaciones importantes.
 
 Los backups se almacenan en:
 
@@ -1234,7 +1067,7 @@ Los backups se almacenan en:
 backups/
 ```
 
-Por ejemplo:
+Ejemplo:
 
 ```text
 backups/
@@ -1244,15 +1077,462 @@ backups/
 └── ...
 ```
 
-Esto permite recuperar información en caso de que ocurra algún problema.
+Esto permite recuperar información si ocurre algún problema.
 
 ---
 
-# 🌐 27. API de la Caja
+# 🧾 27. Recibo de compra
 
-La Caja se comunica con Flask mediante rutas especiales llamadas API.
+Además de actualizar el stock, el sistema puede generar un recibo con la información de la compra.
 
-Las principales rutas utilizadas son:
+El recibo puede contener:
+
+```text
+================================
+          SUPERMERCADO
+================================
+
+Fecha: 01/09/2026
+Hora: 10:25
+
+--------------------------------
+PRODUCTOS
+--------------------------------
+
+Salsa Golf
+Cantidad: 2
+Precio: $1500
+Subtotal: $3000
+
+Pizza
+Cantidad: 1
+Precio: $2000
+Subtotal: $2000
+
+--------------------------------
+
+TOTAL: $5000
+
+================================
+       GRACIAS POR SU COMPRA
+================================
+```
+
+El recibo funciona como comprobante de la operación realizada dentro del sistema.
+
+---
+
+# 📧 28. Enviar el recibo por Gmail
+
+Una de las funciones adicionales del sistema es permitir que el cliente reciba el recibo de su compra mediante correo electrónico.
+
+El funcionamiento sería:
+
+```text
+Cliente realiza compra
+          ↓
+     Finaliza venta
+          ↓
+    Se actualiza Excel
+          ↓
+   Se registra movimiento
+          ↓
+    Se genera recibo
+          ↓
+  Cliente coloca su Gmail
+          ↓
+       Python
+          ↓
+     Servidor Gmail
+          ↓
+   Recibo enviado
+          ↓
+   📧 Cliente recibe
+```
+
+Por ejemplo, después de finalizar la compra, la Caja puede solicitar:
+
+```text
+📧 ¿Desea recibir su recibo por correo?
+
+Correo electrónico:
+
+[____________________________]
+
+[ Enviar recibo ]
+```
+
+El cliente introduce su dirección de correo.
+
+Por ejemplo:
+
+```text
+cliente@gmail.com
+```
+
+El sistema prepara el recibo y lo envía.
+
+---
+
+# 📄 ¿Qué recibe el cliente?
+
+El correo puede tener como asunto:
+
+```text
+Recibo de compra - Sistema de Caja
+```
+
+Y dentro:
+
+```text
+Hola.
+
+Gracias por su compra.
+
+Fecha: 01/09/2026
+Hora: 10:25
+
+Productos:
+
+Salsa Golf x2 ........ $3000
+Pizza x1 ............. $2000
+
+TOTAL: $5000
+
+Gracias por su compra.
+```
+
+También podemos configurar el sistema para enviar el recibo como **archivo adjunto**, por ejemplo:
+
+```text
+recibo_2026-09-01_10-25.pdf
+```
+
+Esto permite que el cliente tenga una copia del comprobante.
+
+---
+
+# 📧 29. Configurar Gmail
+
+Para enviar correos desde Python utilizando Gmail, no debemos colocar nuestra contraseña normal de Gmail directamente dentro del programa.
+
+Google dispone de mecanismos de seguridad para permitir que aplicaciones utilicen una cuenta de correo.
+
+Una opción habitual es utilizar una **contraseña de aplicación**.
+
+El concepto sería:
+
+```text
+Cuenta Gmail
+     │
+     ▼
+Contraseña de aplicación
+     │
+     ▼
+Python
+     │
+     ▼
+Servidor SMTP de Gmail
+     │
+     ▼
+Correo del cliente
+```
+
+---
+
+# 🔐 30. Contraseña de aplicación de Google
+
+Para utilizar una contraseña de aplicación, la cuenta de Google debe tener activada la **verificación en dos pasos**.
+
+La contraseña de aplicación es diferente de la contraseña normal de Gmail.
+
+Por seguridad:
+
+**NO debemos escribir la contraseña de Gmail directamente en el código.**
+
+Tampoco debemos subirla a GitHub.
+
+Nunca debemos hacer algo como:
+
+```python
+PASSWORD = "mi_contraseña"
+```
+
+porque estaríamos exponiendo nuestras credenciales.
+
+---
+
+# 🔒 Variables de entorno
+
+Una forma más segura de guardar los datos utilizados para enviar el correo es utilizar variables de entorno.
+
+Por ejemplo:
+
+```text
+EMAIL_USUARIO
+EMAIL_PASSWORD
+```
+
+El programa puede leerlas desde Python.
+
+Conceptualmente:
+
+```python
+import os
+
+correo = os.getenv("EMAIL_USUARIO")
+password = os.getenv("EMAIL_PASSWORD")
+```
+
+De esta manera, la contraseña no tiene que aparecer directamente dentro del código.
+
+---
+
+# ⚠️ IMPORTANTE PARA GITHUB
+
+Nunca debemos subir:
+
+```text
+Contraseñas
+Contraseñas de aplicación
+Claves privadas
+Tokens
+Credenciales
+```
+
+al repositorio público.
+
+Si utilizamos un archivo `.env`, debemos incluirlo en:
+
+```text
+.gitignore
+```
+
+Por ejemplo:
+
+```text
+.env
+```
+
+Esto evita que Git intente subirlo al repositorio.
+
+---
+
+# 📤 31. Funcionamiento del envío del recibo
+
+El proceso completo puede ser:
+
+```text
+                 CLIENTE
+                    │
+                    ▼
+              Realiza compra
+                    │
+                    ▼
+                 CAJA
+                    │
+                    ▼
+             Finalizar venta
+                    │
+                    ▼
+                 FLASK
+                    │
+                    ▼
+                Python
+                    │
+             ┌──────┴──────┐
+             │             │
+             ▼             ▼
+           EXCEL        RECIBO
+             │             │
+             ▼             ▼
+         Stock/       Contenido del
+       Movimientos       correo
+                           │
+                           ▼
+                     Servidor Gmail
+                           │
+                           ▼
+                    📧 CLIENTE
+```
+
+---
+
+# 🧩 ¿Qué hace Python en el envío?
+
+Python puede encargarse de:
+
+1. Recibir los datos de la venta.
+2. Comprobar el stock.
+3. Actualizar Excel.
+4. Registrar el movimiento.
+5. Crear el contenido del recibo.
+6. Obtener el correo electrónico del cliente.
+7. Conectarse al servidor de correo.
+8. Enviar el recibo.
+
+---
+
+# 📬 SMTP
+
+Para enviar el correo se utiliza el protocolo:
+
+```text
+SMTP
+```
+
+SMTP significa:
+
+```text
+Simple Mail Transfer Protocol
+```
+
+Es el protocolo utilizado para enviar correos electrónicos.
+
+El funcionamiento puede representarse como:
+
+```text
+Python
+  │
+  ▼
+SMTP de Gmail
+  │
+  ▼
+Cuenta del sistema
+  │
+  ▼
+Correo del cliente
+```
+
+Python puede utilizar `smtplib` para establecer la conexión.
+
+---
+
+# 📦 Librerías para el correo
+
+No es necesario instalar `smtplib` ni `email`.
+
+Forman parte de Python.
+
+Por ejemplo:
+
+```python
+import smtplib
+
+from email.message import EmailMessage
+```
+
+Estas herramientas permiten preparar y enviar el correo.
+
+---
+
+# 🧾 Ejemplo conceptual
+
+El sistema puede crear un mensaje similar a:
+
+```python
+mensaje = EmailMessage()
+
+mensaje["Subject"] = "Recibo de compra"
+mensaje["From"] = correo
+mensaje["To"] = correo_cliente
+
+mensaje.set_content("""
+Gracias por su compra.
+
+Total: $5000
+
+Gracias por elegirnos.
+""")
+```
+
+Después Python puede conectarse al servidor SMTP y enviar el mensaje.
+
+---
+
+# 🔐 Seguridad del correo
+
+La cuenta utilizada para enviar los recibos debería ser una cuenta destinada al sistema.
+
+Por ejemplo:
+
+```text
+supermercado.sistema@gmail.com
+```
+
+No es recomendable utilizar una cuenta personal.
+
+Además:
+
+* No compartir la contraseña.
+* No subir credenciales a GitHub.
+* No escribir contraseñas directamente en `app.py`.
+* Utilizar variables de entorno.
+* Utilizar contraseña de aplicación cuando corresponda.
+* Revocar la contraseña de aplicación si deja de utilizarse.
+
+---
+
+# 📎 Recibo como archivo adjunto
+
+Una versión más completa del sistema puede generar un archivo de recibo.
+
+Por ejemplo:
+
+```text
+recibo_100000000067.pdf
+```
+
+Después Python puede adjuntar ese archivo al correo.
+
+El cliente recibiría:
+
+```text
+📧 Recibo de compra
+
+Adjunto:
+📄 recibo.pdf
+```
+
+Esto es especialmente útil si queremos que el cliente pueda guardar o imprimir su recibo.
+
+---
+
+# 🔄 Flujo completo del recibo
+
+```text
+1. Cliente escanea productos
+             ↓
+2. Productos entran al carrito
+             ↓
+3. Se calcula el total
+             ↓
+4. Cliente finaliza la compra
+             ↓
+5. Se comprueba el stock
+             ↓
+6. Se descuenta el stock
+             ↓
+7. Se registra la SALIDA
+             ↓
+8. Se guarda Excel
+             ↓
+9. Se genera el recibo
+             ↓
+10. Cliente introduce su correo
+             ↓
+11. Python prepara el correo
+             ↓
+12. Gmail envía el mensaje
+             ↓
+13. Cliente recibe el recibo
+```
+
+---
+
+# 🌐 32. API de la Caja
+
+Las principales rutas utilizadas pueden ser:
 
 ```text
 /api/producto/<codigo>
@@ -1264,11 +1544,19 @@ y:
 /api/venta
 ```
 
+También puede existir una ruta específica para el envío del recibo, por ejemplo:
+
+```text
+/api/enviar-recibo
+```
+
+La ruta exacta dependerá de cómo esté implementada la aplicación.
+
 ---
 
-## 🔎 `/api/producto/<codigo>`
+# 🔎 `/api/producto/<codigo>`
 
-Esta ruta sirve para buscar un producto.
+Sirve para buscar un producto.
 
 Ejemplo:
 
@@ -1276,7 +1564,7 @@ Ejemplo:
 /api/producto/100000000067
 ```
 
-El funcionamiento es:
+Funcionamiento:
 
 ```text
 caja.js
@@ -1288,21 +1576,13 @@ stock.buscar_producto()
 productos_corregido.xlsx
 ```
 
-Si el producto existe, Flask devuelve sus datos.
-
 ---
 
-## 🧾 `/api/venta`
+# 🧾 `/api/venta`
 
-Esta ruta se utiliza para finalizar una compra.
+Esta ruta se utiliza para finalizar la compra.
 
-Recibe:
-
-```text
-Productos
-Código
-Cantidad
-```
+Recibe los productos y sus cantidades.
 
 Después:
 
@@ -1320,7 +1600,29 @@ guardar Excel
 
 ---
 
-# 🟨 28. JavaScript de la Caja
+# 📧 `/api/enviar-recibo`
+
+Si el sistema implementa una ruta específica para enviar el recibo, su función puede ser:
+
+```text
+Caja
+  ↓
+correo del cliente
+  ↓
+Flask
+  ↓
+Python
+  ↓
+Gmail
+  ↓
+cliente
+```
+
+Esta ruta debería recibir únicamente la información necesaria para realizar el envío.
+
+---
+
+# 🟨 33. JavaScript de la Caja
 
 El archivo:
 
@@ -1341,69 +1643,62 @@ Entre sus funciones se encuentran:
 * Calcular el total.
 * Eliminar productos.
 * Finalizar la compra.
+* Solicitar el correo electrónico.
+* Enviar la información del recibo.
 * Mostrar mensajes.
 
 ---
 
-## 🔄 Ejemplo del funcionamiento
-
-Cuando se escanea:
-
-```text
-100000000067
-```
-
-JavaScript hace:
-
-```javascript
-buscarProducto("100000000067");
-```
-
-Después realiza:
-
-```javascript
-fetch(
-    `/api/producto/100000000067`
-);
-```
-
-Flask recibe la solicitud.
-
----
-
-# 🐍 29. Flask y la Caja
+# 🐍 34. Flask y la Caja
 
 Flask se encuentra entre el navegador y Python.
 
 El recorrido es:
 
 ```text
-                 NAVEGADOR
-                     │
-                     ▼
-                 caja.js
-                     │
-                     ▼
-                   FLASK
-                     │
-                     ▼
-                 stock.py
-                     │
-                     ▼
-                  EXCEL
+NAVEGADOR
+    │
+    ▼
+ caja.js
+    │
+    ▼
+  FLASK
+    │
+    ▼
+ stock.py
+    │
+    ▼
+ EXCEL
 ```
 
-Flask recibe las solicitudes de JavaScript y decide qué función de Python debe ejecutar.
+Para el correo:
+
+```text
+NAVEGADOR
+    │
+    ▼
+ caja.js
+    │
+    ▼
+  FLASK
+    │
+    ▼
+ PYTHON
+    │
+    ▼
+  GMAIL
+    │
+    ▼
+ CLIENTE
+```
 
 ---
 
-# 📦 30. Diferencia entre Gestión y Caja
-
-El proyecto tiene dos partes principales.
+# 📦 35. Diferencia entre Gestión y Caja
 
 ## 📦 Gestión
 
-La Gestión está pensada para el administrador.
+Está pensada para el administrador.
 
 Permite:
 
@@ -1420,26 +1715,28 @@ El acceso está protegido mediante login.
 
 ## 🛒 Caja
 
-La Caja está pensada para realizar ventas.
+Está pensada para realizar ventas.
 
 Permite:
 
 * Escanear productos.
 * Buscar productos automáticamente.
 * Agregar productos al carrito.
-* Modificar cantidades mediante nuevos escaneos.
+* Modificar cantidades.
 * Calcular subtotales.
 * Calcular el total.
 * Eliminar productos.
 * Finalizar compras.
 * Descontar stock.
-* Registrar la salida en Movimientos.
+* Registrar la salida.
+* Generar el recibo.
+* Enviar el recibo por correo.
 
 ---
 
-# 🔄 31. Flujo completo de una venta
+# 🔄 36. Flujo completo de una venta
 
-Supongamos que tenemos:
+Supongamos:
 
 ```text
 Producto:
@@ -1491,19 +1788,11 @@ JavaScript realiza:
 /api/producto/100000000067
 ```
 
-Flask recibe el código.
-
 ---
 
 ## Paso 4 — Consultar Excel
 
-Python busca:
-
-```text
-100000000067
-```
-
-Encuentra:
+Python encuentra:
 
 ```text
 Salsa Golf
@@ -1515,11 +1804,8 @@ Stock: 20
 
 ## Paso 5 — Agregar al carrito
 
-El producto aparece:
-
 ```text
 Salsa Golf
-Precio: $1500
 Cantidad: 1
 Subtotal: $1500
 ```
@@ -1528,22 +1814,9 @@ Subtotal: $1500
 
 ## Paso 6 — Segundo escaneo
 
-Escaneamos nuevamente:
-
-```text
-100000000067
-```
-
-La cantidad aumenta:
-
 ```text
 Cantidad: 2
-```
-
-El subtotal pasa a:
-
-```text
-$1500 × 2 = $3000
+Subtotal: $3000
 ```
 
 ---
@@ -1560,8 +1833,6 @@ Presionamos:
 
 ## Paso 8 — Comprobar stock
 
-El sistema comprueba:
-
 ```text
 Stock disponible: 20
 Compra: 2
@@ -1573,8 +1844,6 @@ Hay suficiente stock.
 
 ## Paso 9 — Descontar
 
-Python realiza:
-
 ```text
 20 - 2 = 18
 ```
@@ -1582,8 +1851,6 @@ Python realiza:
 ---
 
 ## Paso 10 — Guardar Excel
-
-Excel queda:
 
 ```text
 Salsa Golf
@@ -1593,8 +1860,6 @@ Stock: 18
 ---
 
 ## Paso 11 — Registrar movimiento
-
-La hoja `Movimientos` registra:
 
 ```text
 Código: 100000000067
@@ -1607,17 +1872,68 @@ Stock resultante: 18
 
 ---
 
-# 🧩 32. ¿Cómo se conectan Python, Excel y Flask?
+## Paso 12 — Generar recibo
 
-Esta es una de las partes más importantes del proyecto.
+El sistema prepara:
 
-Podemos imaginar que cada uno tiene un trabajo diferente.
+```text
+Salsa Golf x2 ........ $3000
+
+TOTAL: $3000
+```
+
+---
+
+## Paso 13 — Solicitar correo
+
+La Caja puede mostrar:
+
+```text
+📧 ¿Desea recibir su recibo?
+
+Correo:
+[________________________]
+
+[Enviar recibo]
+```
+
+---
+
+## Paso 14 — Enviar
+
+Python utiliza la cuenta configurada para enviar el correo.
+
+```text
+Sistema
+   ↓
+Gmail
+   ↓
+cliente@gmail.com
+```
+
+---
+
+## Paso 15 — Cliente recibe el recibo
+
+El cliente recibe:
+
+```text
+📧 Recibo de compra
+```
+
+y puede conservarlo en su correo.
+
+---
+
+# 🧩 37. ¿Cómo se conectan Python, Excel y Flask?
+
+Cada parte tiene un trabajo diferente.
 
 ---
 
 ## 🟢 Excel = guarda la información
 
-Excel funciona como el lugar donde guardamos nuestros productos.
+Excel guarda los productos.
 
 Por ejemplo:
 
@@ -1650,13 +1966,11 @@ Python realiza:
 20 - 5 = 15
 ```
 
+También puede encargarse del envío del recibo.
+
 ---
 
 ## 🟠 Flask = conecta la página con Python
-
-Flask recibe las acciones realizadas desde la página.
-
-Por ejemplo:
 
 ```text
 Navegador
@@ -1670,29 +1984,43 @@ Excel
 
 ---
 
-## 🟣 JavaScript = controla la interacción de Caja
+## 🟣 JavaScript = controla la Caja
 
-JavaScript permite que la Caja responda rápidamente a las acciones del usuario.
-
-Por ejemplo:
+JavaScript permite:
 
 ```text
 Escanear
    ↓
-JavaScript detecta ENTER
+Detectar código
    ↓
-Busca producto
+Buscar producto
    ↓
-Muestra producto
+Mostrar producto
    ↓
-Agrega al carrito
+Agregar al carrito
+   ↓
+Finalizar
 ```
 
 ---
 
-# 🧠 33. Flujo completo del sistema
+## 📧 Gmail = entrega el recibo
 
-Podemos resumir todo el sistema de esta manera:
+Cuando el cliente solicita el recibo:
+
+```text
+Python
+   ↓
+SMTP
+   ↓
+Gmail
+   ↓
+Cliente
+```
+
+---
+
+# 🔄 38. Flujo completo del sistema
 
 ```text
                          USUARIO
@@ -1722,13 +2050,27 @@ Podemos resumir todo el sistema de esta manera:
                   │                   │
                   ▼                   ▼
                 STOCK             MOVIMIENTOS
+                                     
+                            CAJA
+                              │
+                              ▼
+                           VENTA
+                              │
+                              ▼
+                           RECIBO
+                              │
+                              ▼
+                           GMAIL
+                              │
+                              ▼
+                           CLIENTE
 ```
 
 ---
 
 # 🏷️ Generación de códigos de barras
 
-El proyecto también puede utilizar Python para crear códigos de barras.
+El proyecto puede utilizar Python para crear códigos de barras.
 
 La librería:
 
@@ -1736,7 +2078,7 @@ La librería:
 python-barcode
 ```
 
-se encarga de generar la imagen.
+permite generar la imagen.
 
 Por ejemplo:
 
@@ -1744,17 +2086,13 @@ Por ejemplo:
 100000000067
 ```
 
-puede convertirse en una imagen de código de barras.
-
-Después esa imagen puede utilizarse para identificar el producto.
+puede convertirse en una imagen.
 
 ---
 
 # 📑 Excel y la hoja "Movimientos"
 
-El sistema utiliza Excel no solamente para guardar el stock.
-
-También utiliza una hoja llamada:
+El sistema utiliza una hoja llamada:
 
 ```text
 Movimientos
@@ -1769,8 +2107,6 @@ Por ejemplo:
 | 01/09/2026 | 100000000067 | Salsa Golf | SALIDA    |        5 |             20 |           15 |
 | 01/09/2026 | 100000000002 | Pizza      | ENTRADA   |       10 |             15 |           25 |
 
-De esta manera podemos saber qué ocurrió con el stock.
-
 Las ventas realizadas desde Caja también pueden registrarse como:
 
 ```text
@@ -1779,7 +2115,7 @@ SALIDA
 
 ---
 
-# ⚠️ 34. Problemas frecuentes
+# ⚠️ 39. Problemas frecuentes
 
 ## "python3: command not found"
 
@@ -1794,8 +2130,6 @@ sudo apt install python3
 
 ## "pip: command not found"
 
-Probar:
-
 ```bash
 sudo apt install python3-pip
 ```
@@ -1803,8 +2137,6 @@ sudo apt install python3-pip
 ---
 
 ## No puedo crear el entorno virtual
-
-Probar:
 
 ```bash
 sudo apt install python3-venv
@@ -1820,7 +2152,7 @@ python3 -m venv .venv
 
 ## No encuentro Flask
 
-Activar primero el entorno:
+Activar primero:
 
 ```bash
 source .venv/bin/activate
@@ -1835,8 +2167,6 @@ pip install Flask
 ---
 
 ## No encuentro pandas
-
-Con el entorno activado:
 
 ```bash
 pip install pandas
@@ -1870,45 +2200,28 @@ pip install Pillow
 
 # 🛒 Problemas de Caja
 
-## ❌ "Error de conexión"
+## ❌ Error de conexión
 
-Si Caja muestra:
-
-```text
-❌ Error de conexión
-```
-
-cuando escaneamos un producto, debemos comprobar:
+Comprobar:
 
 1. Que Flask esté ejecutándose.
 2. Que el navegador pueda acceder al servidor.
-3. Que exista la ruta:
-
-```text
-/api/producto/<codigo>
-```
-
+3. Que exista `/api/producto/<codigo>`.
 4. Que `stock.py` esté disponible.
-5. Que exista `productos_corregido.xlsx`.
-6. Que el código exista en Excel.
+5. Que exista el Excel.
+6. Que el código exista.
 
 ---
 
-## ❌ "Producto no encontrado"
+## ❌ Producto no encontrado
 
-Si aparece:
+Comprobar:
 
-```text
-❌ Producto no encontrado
-```
-
-debemos comprobar:
-
-* Que el código esté escrito correctamente.
-* Que el código exista en Excel.
-* Que esté en la columna `Código de serie`.
-* Que no tenga espacios adicionales.
-* Que el producto esté correctamente registrado.
+* Código correcto.
+* Código existente en Excel.
+* Columna `Código de serie`.
+* Ausencia de espacios.
+* Producto correctamente registrado.
 
 ---
 
@@ -1916,59 +2229,132 @@ debemos comprobar:
 
 Comprobar:
 
-1. Que el lector esté conectado por USB.
-2. Que Ubuntu/Raspberry Pi lo reconozca.
-3. Que el cursor esté dentro del campo de código.
-4. Que el lector envíe ENTER después del código.
-5. Probar escribiendo manualmente un código en el campo.
+1. USB conectado.
+2. Sistema operativo reconoce el lector.
+3. Cursor dentro del campo.
+4. Lector envía ENTER.
+5. Probar código manualmente.
 
 ---
 
-## ❌ La Caja encuentra el producto pero no lo agrega
+## ❌ Stock insuficiente
 
-Comprobar que la respuesta de Flask contenga:
+Significa que la cantidad solicitada supera el stock disponible.
+
+---
+
+# 📧 Problemas con el correo
+
+## ❌ El correo no se envía
+
+Comprobar:
+
+1. Que exista conexión a Internet.
+2. Que la cuenta de Gmail esté correctamente configurada.
+3. Que la verificación en dos pasos esté configurada cuando sea necesaria.
+4. Que la contraseña de aplicación sea correcta.
+5. Que las variables de entorno estén correctamente configuradas.
+6. Que la dirección del cliente sea válida.
+7. Que Flask esté ejecutándose.
+8. Que la ruta encargada del envío exista.
+9. Que Python pueda conectarse al servidor SMTP.
+
+---
+
+## ❌ "Authentication failed"
+
+Este error normalmente indica que Gmail rechazó la autenticación.
+
+Comprobar:
 
 ```text
-codigo
-nombre
-precio
-stock
+Correo utilizado
+       ↓
+Contraseña de aplicación
+       ↓
+Configuración de Google
 ```
 
-El JavaScript utiliza estos datos para crear el producto del carrito.
+No debemos colocar la contraseña normal de Gmail si estamos utilizando una contraseña de aplicación.
 
 ---
 
-## ❌ "Stock insuficiente"
+## ❌ El correo llega a Spam
 
-Esto significa que el sistema detectó que la cantidad solicitada es mayor que la cantidad disponible.
+El correo puede terminar en la carpeta de Spam dependiendo de la configuración del destinatario y de otros factores.
+
+Debemos comprobar:
+
+```text
+Bandeja de entrada
+Spam
+Correo no deseado
+```
+
+---
+
+## ❌ El recibo no llega
+
+Comprobar:
+
+* Dirección del cliente.
+* Conexión a Internet.
+* Configuración de Gmail.
+* Spam.
+* Mensaje de error de Flask.
+* Configuración de SMTP.
+
+---
+
+# 🔐 Seguridad
+
+Nunca debemos publicar:
+
+```text
+Contraseñas
+Contraseñas de aplicación
+Tokens
+Claves privadas
+Credenciales
+```
+
+en GitHub.
+
+Si utilizamos:
+
+```text
+.env
+```
+
+debemos agregarlo a:
+
+```text
+.gitignore
+```
 
 Por ejemplo:
 
 ```text
-Stock: 2
-Compra: 5
+.env
 ```
-
-No se permite realizar la operación.
 
 ---
 
-## ❌ No se actualiza el Excel
+# ❌ No se actualiza el Excel
 
 Comprobar:
 
 * Que `productos_corregido.xlsx` exista.
-* Que el archivo no esté abierto en LibreOffice/Excel.
-* Que Python tenga permisos para modificarlo.
-* Que la carpeta de backups exista.
+* Que el archivo no esté abierto.
+* Que Python tenga permisos.
+* Que exista la carpeta `backups/`.
 * Que no haya otro proceso utilizando el archivo.
 
 ---
 
 # ❗ Error importante: "sudo"
 
-En Ubuntu podemos encontrarnos con errores como:
+En Ubuntu podemos encontrarnos con:
 
 ```text
 is not in the sudoers file
@@ -1980,19 +2366,25 @@ o:
 Permission denied
 ```
 
-Esto significa que el usuario actual no tiene permiso para realizar determinadas tareas de administración.
+Esto significa que el usuario actual no tiene permisos de administrador.
 
-Si ocurre esto, no debemos intentar modificar archivos importantes del sistema sin saber qué estamos haciendo.
+El comando:
 
-Lo recomendable es utilizar una cuenta de Ubuntu que tenga permisos de administrador.
+```bash
+sudo
+```
+
+permite ejecutar determinadas órdenes con permisos administrativos.
+
+Si el usuario no tiene permisos de administrador, `sudo` puede fallar.
+
+No recomendamos modificar manualmente los permisos del sistema si no sabemos exactamente qué estamos haciendo.
 
 ---
 
-# 🔄 Cada vez que volvamos a trabajar en el proyecto
+# 🔄 Cada vez que volvamos a trabajar
 
-No necesitamos instalar todo nuevamente.
-
-Normalmente hacemos:
+Normalmente:
 
 ```bash
 cd ~/Proyecto
@@ -2004,7 +2396,7 @@ Después:
 source .venv/bin/activate
 ```
 
-Y ejecutamos:
+Y:
 
 ```bash
 python3 app.py
@@ -2016,11 +2408,9 @@ Cuando terminemos:
 deactivate
 ```
 
-Esto cierra el entorno virtual.
-
 ---
 
-# 📦 ¿Cómo saber qué librerías tenemos instaladas?
+# 📦 ¿Cómo saber qué librerías tenemos?
 
 Con el entorno activado:
 
@@ -2028,7 +2418,7 @@ Con el entorno activado:
 pip list
 ```
 
-Podemos comprobar que aparezcan:
+Deberían aparecer:
 
 ```text
 Flask
@@ -2042,9 +2432,7 @@ python-barcode
 
 # 🧪 Comprobar que todo funciona
 
-Podemos hacer una prueba sencilla.
-
-Primero activamos el entorno:
+Activamos:
 
 ```bash
 source .venv/bin/activate
@@ -2056,7 +2444,7 @@ Después:
 python3
 ```
 
-Y dentro de Python:
+Y:
 
 ```python
 import pandas
@@ -2064,6 +2452,8 @@ import openpyxl
 import barcode
 from PIL import Image
 import flask
+import smtplib
+from email.message import EmailMessage
 ```
 
 Si no aparece ningún error, las librerías están disponibles.
@@ -2078,14 +2468,14 @@ exit()
 
 # 🚀 Instalación rápida
 
-Si ya tenemos Ubuntu y Python instalados, podemos resumir la instalación en:
+Si ya tenemos Ubuntu y Python:
 
 ```bash
 sudo apt update
 sudo apt install python3 python3-pip python3-venv
 ```
 
-Entramos en el proyecto:
+Entramos al proyecto:
 
 ```bash
 cd ~/Proyecto
@@ -2097,19 +2487,19 @@ Creamos el entorno:
 python3 -m venv .venv
 ```
 
-Lo activamos:
+Activamos:
 
 ```bash
 source .venv/bin/activate
 ```
 
-Instalamos todo:
+Instalamos:
 
 ```bash
 pip install pandas openpyxl python-barcode Pillow Flask
 ```
 
-Y ya podemos ejecutar:
+Ejecutamos:
 
 ```bash
 python3 app.py
@@ -2118,8 +2508,6 @@ python3 app.py
 ---
 
 # 🧾 Sistema completo de Caja
-
-El funcionamiento de Caja puede resumirse en:
 
 ```text
 ┌──────────────────────────────┐
@@ -2169,16 +2557,25 @@ El funcionamiento de Caja puede resumirse en:
        REGISTRAR SALIDA
                │
                ▼
-             EXCEL
+          GENERAR RECIBO
+               │
+               ▼
+        SOLICITAR GMAIL
+               │
+               ▼
+          ENVIAR RECIBO
+               │
+               ▼
+             CLIENTE
 ```
 
 ---
 
-# 🏁 35. Resumen
+# 🏁 40. Resumen
 
 Para poner en funcionamiento el proyecto completo:
 
-### En la computadora
+## En la computadora
 
 1. Instalar Ubuntu.
 2. Instalar Python.
@@ -2189,10 +2586,13 @@ Para poner en funcionamiento el proyecto completo:
 7. Instalar Visual Studio Code.
 8. Abrir el proyecto.
 9. Revisar la configuración.
-10. Ejecutar Flask.
-11. Abrir la página desde el navegador.
+10. Configurar el correo si se utilizará el envío de recibos.
+11. Ejecutar Flask.
+12. Abrir la página desde el navegador.
 
-### En la Raspberry Pi
+---
+
+## En la Raspberry Pi
 
 1. Conseguir una Raspberry Pi 3 Model B.
 2. Conseguir una microSD.
@@ -2202,11 +2602,14 @@ Para poner en funcionamiento el proyecto completo:
 6. Instalar Python.
 7. Crear el entorno virtual.
 8. Instalar las librerías.
-9. Conectar el lector de códigos de barras.
-10. Ejecutar Flask.
-11. Abrir el sistema desde el navegador.
+9. Configurar el correo.
+10. Conectar el lector de códigos de barras.
+11. Ejecutar Flask.
+12. Abrir el sistema desde el navegador.
 
-### Para utilizar Gestión
+---
+
+## Para utilizar Gestión
 
 1. Abrir la página.
 2. Entrar a Gestión.
@@ -2216,18 +2619,23 @@ Para poner en funcionamiento el proyecto completo:
 6. Consultar stock bajo.
 7. Consultar movimientos.
 
-### Para utilizar Caja
+---
+
+## Para utilizar Caja
 
 1. Abrir la página.
 2. Entrar a Caja.
 3. Escanear un producto.
-4. Esperar a que aparezca el producto.
+4. Esperar a que aparezca.
 5. Escanear nuevamente si se necesitan más unidades.
 6. Revisar el carrito.
 7. Revisar el total.
 8. Finalizar la compra.
-9. Comprobar que el stock se haya actualizado.
-10. Comprobar el movimiento registrado.
+9. Comprobar el stock.
+10. Comprobar el movimiento.
+11. Generar el recibo.
+12. Introducir el correo del cliente.
+13. Enviar el recibo por Gmail.
 
 ---
 
@@ -2235,9 +2643,31 @@ Para poner en funcionamiento el proyecto completo:
 
 La idea del sistema puede resumirse en:
 
-> **El lector identifica el producto, JavaScript controla la Caja, Flask conecta la página con Python, `stock.py` realiza las operaciones y Excel guarda la información.**
+> **El lector identifica el producto, JavaScript controla la Caja, Flask conecta la página con Python, `stock.py` realiza las operaciones, Excel guarda la información y Gmail permite enviar el recibo al cliente.**
 
-De esta manera tenemos un sistema que combina hardware y software para facilitar la administración del stock y la realización de ventas.
+De esta manera tenemos un sistema que combina **hardware, software, gestión de stock, caja registradora y comunicación por correo electrónico**.
+
+El flujo completo es:
+
+```text
+LECTOR
+   ↓
+JAVASCRIPT
+   ↓
+FLASK
+   ↓
+PYTHON
+   ↓
+EXCEL
+   ↓
+VENTA
+   ↓
+RECIBO
+   ↓
+GMAIL
+   ↓
+CLIENTE
+```
 
 ---
 
@@ -2271,6 +2701,10 @@ https://filezilla-project.org/
 
 https://www.realvnc.com/
 
+### Google Account
+
+https://myaccount.google.com/
+
 ---
 
 # 👥 Para nuevos usuarios
@@ -2293,6 +2727,19 @@ No recomendamos borrar archivos del sistema ni ejecutar comandos que no entendam
 
 ---
 
+# 🎓 Objetivo del proyecto
+
 Este proyecto fue pensado para aprender y, al mismo tiempo, crear una herramienta que pueda utilizarse en una situación real.
 
-La intención de este README es que cualquier persona pueda descargar el proyecto y seguir los pasos necesarios para ponerlo en funcionamiento, incluso si nunca trabajó anteriormente con Python, Flask, Raspberry Pi, Excel o códigos de barras.
+La intención de este README es que cualquier persona pueda descargar el proyecto y seguir los pasos necesarios para ponerlo en funcionamiento, incluso si nunca trabajó anteriormente con:
+
+* Python.
+* Flask.
+* Raspberry Pi.
+* Excel.
+* Códigos de barras.
+* JavaScript.
+* Sistemas de Caja.
+* Envío de correos electrónicos.
+
+El resultado es un sistema completo capaz de administrar productos, controlar el stock, realizar ventas, registrar movimientos, generar recibos y enviarlos al cliente por correo electrónico.
